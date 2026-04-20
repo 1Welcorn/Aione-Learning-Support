@@ -8,6 +8,8 @@ export interface Question {
   mediator?: string;
   scaleMax?: number;
   correctAnswer?: string;
+  imageUrl?: string;
+  audioUrl?: string;
 }
 
 export interface ExternalLink {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Question, QuestionType } from '../../types';
 import { COLORS } from '../../constants';
-import { Info, CheckCircle, Volume2, Edit2, Trash2, X, Check, Plus, Circle, CheckSquare } from 'lucide-react';
+import { Info, CheckCircle, Volume2, Edit2, Trash2, X, Check, Plus, Circle, CheckSquare, Image as ImageIcon, Music } from 'lucide-react';
 import { speechService } from '../../utils/speech';
 
 interface QuestionBlockProps {
@@ -33,6 +33,8 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
   const [editMediator, setEditMediator] = useState(question.mediator || '');
   const [editHint, setEditHint] = useState(question.hint || '');
   const [editCorrect, setEditCorrect] = useState(question.correctAnswer || '');
+  const [editImage, setEditImage] = useState(question.imageUrl || '');
+  const [editAudio, setEditAudio] = useState(question.audioUrl || '');
   
   const currentColors = COLORS[color] || COLORS.teal;
 
@@ -61,7 +63,9 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
       opts: ['mc', 'checkbox'].includes(editType) ? editOpts : undefined,
       mediator: editMediator,
       hint: editHint,
-      correctAnswer: editCorrect
+      correctAnswer: editCorrect,
+      imageUrl: editImage,
+      audioUrl: editAudio
     });
     setIsEditing(false);
   };
@@ -183,6 +187,35 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
 
             <div className="editor-row" style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div className="admin-form-group">
+                <label style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--ink4)' }}>URL da Imagem</label>
+                <div className="admin-input-with-icon">
+                  <ImageIcon size={14} />
+                  <input 
+                    type="text" 
+                    className="admin-inline-input"
+                    value={editImage}
+                    onChange={(e) => setEditImage(e.target.value)}
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
+              <div className="admin-form-group">
+                <label style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--ink4)' }}>URL do Áudio</label>
+                <div className="admin-input-with-icon">
+                  <Music size={14} />
+                  <input 
+                    type="text" 
+                    className="admin-inline-input"
+                    value={editAudio}
+                    onChange={(e) => setEditAudio(e.target.value)}
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="editor-row" style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="admin-form-group">
                 <label style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--ink4)' }}>Guia da Mediadora</label>
                 <textarea 
                    className="admin-input-full"
@@ -217,12 +250,20 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
           <>
             <div className="q-text">
               {question.q}
-              {!/\b(o|a|os|as|um|uma|que|é|significa|mostra|o que|qual|como|onde|quem)\b/i.test(question.q) && (
+              {(!/\b(o|a|os|as|um|uma|que|é|significa|mostra|o que|qual|como|onde|quem)\b/i.test(question.q) || question.audioUrl) && (
                 <button 
                   className="speech-mini-btn" 
-                  onClick={() => speechService.speak(question.q)}
+                  onClick={() => {
+                    if (question.audioUrl) {
+                      const audio = new Audio(question.audioUrl);
+                      audio.play();
+                    } else {
+                      speechService.speak(question.q);
+                    }
+                  }}
+                  title={question.audioUrl ? "Ouvir áudio" : "Ouvir leitura"}
                 >
-                  <Volume2 size={16} />
+                  {question.audioUrl ? <Music size={16} /> : <Volume2 size={16} />}
                 </button>
               )}
               {tempAnswer && question.correctAnswer && (
@@ -235,6 +276,12 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
                 </span>
               )}
             </div>
+
+            {question.imageUrl && (
+              <div className="q-image-wrap">
+                <img src={question.imageUrl} alt="Conteúdo visual" className="q-image" />
+              </div>
+            )}
 
             <div className="q-input-container">
               {question.type === 'text' && (
