@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { getUnitVocabulary } from '../../services/gameService';
 import { Trophy, Heart, Zap, Keyboard, ChevronLeft } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { useStudentJourney } from '../../hooks/useStudentJourney';
 
 interface WordFallGameProps {
   unitId: string;
@@ -25,6 +27,9 @@ const WordFallGame: React.FC<WordFallGameProps> = ({ unitId, onGameOver, onBack 
   const [lives, setLives] = useState(3);
   const [isPlaying, setIsPlaying] = useState(false);
   const [wordsFound, setWordsFound] = useState(0);
+  
+  const { user } = useAuth();
+  const { addStudentRewards } = useStudentJourney(user?.id || '');
   
   const gameLoopRef = useRef<number | null>(null);
   const lastSpawnRef = useRef<number>(0);
@@ -118,6 +123,10 @@ const WordFallGame: React.FC<WordFallGameProps> = ({ unitId, onGameOver, onBack 
 
     const matchingWord = activeWords.find(w => w.text.toUpperCase() === val);
     if (matchingWord) {
+      // Reward XP (2 per letter) and 1 star immediately
+      const xpReward = matchingWord.text.length * 2;
+      addStudentRewards(xpReward, 1);
+      
       // Explosion!
       setActiveWords(prev => prev.filter(w => w.id !== matchingWord.id));
       setScore(s => s + matchingWord.text.length * 10);
