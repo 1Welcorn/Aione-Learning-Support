@@ -1,0 +1,13 @@
+import React from 'react';
+
+export const App: React.FC = () => {
+  return (
+    <div style={{ padding: '50px', textAlign: 'center', fontFamily: 'sans-serif' }}>
+      <h1>SAREH App - Teste de Renderização</h1>
+      <p>Se você está vendo isso, o React está funcionando!</p>
+      <button onClick={() => window.location.reload()}>Recarregar Página</button>
+    </div>
+  );
+};
+
+export default App;

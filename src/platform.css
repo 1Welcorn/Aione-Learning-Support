@@ -1,0 +1,284 @@
+/* --- PLATFORM VIEW STYLES --- */
+.platform-view {
+  padding: 20px;
+  background: var(--bg);
+  min-height: calc(100vh - 70px);
+  padding-bottom: 100px;
+}
+
+.platform-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.welcome-tag {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--teal);
+  margin-bottom: 4px;
+}
+
+.welcome-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--ink1);
+  margin: 0;
+}
+
+.welcome-subtitle {
+  font-size: 14px;
+  color: var(--ink4);
+  margin: 0;
+}
+
+.progress-card-mini {
+  background: white;
+  padding: 10px 15px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+}
+
+.progress-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.pct-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink1);
+}
+
+.pct-lbl {
+  font-size: 10px;
+  color: var(--ink4);
+  text-transform: uppercase;
+}
+
+/* Next Up Card */
+.next-up-card {
+  background: linear-gradient(135deg, var(--teal) 0%, #0d7a58 100%);
+  border-radius: 24px;
+  padding: 24px;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  box-shadow: 0 10px 25px rgba(29, 158, 117, 0.25);
+  cursor: pointer;
+  transition: transform 0.2s;
+  overflow: hidden;
+  position: relative;
+}
+
+.next-up-card:active {
+  transform: scale(0.98);
+}
+
+.next-up-tag {
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(255,255,255,0.2);
+  padding: 4px 10px;
+  border-radius: 10px;
+  display: inline-block;
+  margin-bottom: 12px;
+}
+
+.next-up-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+}
+
+.next-up-sub {
+  font-size: 14px;
+  opacity: 0.8;
+  margin: 0 0 20px 0;
+}
+
+.next-up-btn {
+  background: white;
+  color: var(--teal);
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Learning Trail */
+.learning-trail {
+  margin-bottom: 32px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink1);
+  margin: 0;
+}
+
+.view-all-btn {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--teal);
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.trail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.trail-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.trail-card:active {
+  background: #fdfdfd;
+  transform: translateY(2px);
+}
+
+.trail-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trail-card.teal .trail-card-icon { background: #E1F5EE; color: #1D9E75; }
+.trail-card.blue .trail-card-icon { background: #E6F1FB; color: #185FA5; }
+.trail-card.coral .trail-card-icon { background: #FAECE7; color: #D85A30; }
+.trail-card.purple .trail-card-icon { background: #EEEDFE; color: #534AB7; }
+
+.trail-unit-num {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink4);
+}
+
+.trail-unit-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink1);
+  margin: 2px 0;
+  line-height: 1.2;
+}
+
+.trail-unit-meta {
+  font-size: 11px;
+  color: var(--ink4);
+}
+
+.trail-card-chevron {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  color: var(--border);
+}
+
+/* Shortcuts */
+.platform-shortcuts {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.shortcut-card {
+  flex: 1;
+  background: white;
+  border-radius: 20px;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.shortcut-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shortcut-icon.progress { background: #FFF9E6; color: #BA7517; }
+.shortcut-icon.messages { background: #FDEEEE; color: #D83030; }
+
+.shortcut-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.shortcut-text strong {
+  font-size: 14px;
+  color: var(--ink1);
+}
+
+.shortcut-text span {
+  font-size: 11px;
+  color: var(--ink4);
+}
+
+/* Footer Stats */
+.platform-footer {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.footer-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.footer-stat span {
+  font-size: 10px;
+  color: var(--ink4);
+  text-transform: uppercase;
+}
+
+.footer-stat strong {
+  font-size: 13px;
+  color: var(--ink1);
+}
