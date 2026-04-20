@@ -111,7 +111,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSave
 
       {isExpanded && (
         <div className="unit-body">
-          {unit.brief && (
+          {isAdmin && unit.brief && (
             <div className="mediator-brief">
               <div className="brief-label">Guia Geral da Mediadora</div>
               {unit.brief}
@@ -207,37 +207,39 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSave
             </div>
           )}
 
-          <div className="session-reporting-card">
-            <div className="reporting-header">
-              <FileText size={20} style={{ color: currentColors.main }} />
-              <div className="reporting-title">Relatório de Atendimento</div>
+          {isAdmin && (
+            <div className="session-reporting-card">
+              <div className="reporting-header">
+                <FileText size={20} style={{ color: currentColors.main }} />
+                <div className="reporting-title">Relatório de Atendimento</div>
+              </div>
+              <p className="reporting-subtitle">
+                Descreva as observações pedagógicas, sucessos e desafios desta sessão.
+              </p>
+              <textarea 
+                className="reporting-textarea" 
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Ex: Ione demonstrou facilidade com o vocabulário de cozinha, mas precisou de ajuda na pronúncia de 'spoon'..."
+              />
+              <div className="reporting-actions">
+                <button 
+                  className={`save-session-btn ${sessionSuccess ? 'success' : ''}`}
+                  onClick={handleSaveSession}
+                  disabled={!note.trim() || isSavingSession}
+                  style={{ background: sessionSuccess ? 'var(--teal2)' : currentColors.main }}
+                >
+                  {isSavingSession ? (
+                    <div className="loader-spinner" style={{ width: '18px', height: '18px' }}></div>
+                  ) : sessionSuccess ? (
+                    <><CheckCircle size={18} /> Relatório Salvo!</>
+                  ) : (
+                    <><CheckCircle size={18} /> Finalizar e Salvar Relatório</>
+                  )}
+                </button>
+              </div>
             </div>
-            <p className="reporting-subtitle">
-              Descreva as observações pedagógicas, sucessos e desafios desta sessão.
-            </p>
-            <textarea 
-              className="reporting-textarea" 
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Ex: Ione demonstrou facilidade com o vocabulário de cozinha, mas precisou de ajuda na pronúncia de 'spoon'..."
-            />
-            <div className="reporting-actions">
-              <button 
-                className={`save-session-btn ${sessionSuccess ? 'success' : ''}`}
-                onClick={handleSaveSession}
-                disabled={!note.trim() || isSavingSession}
-                style={{ background: sessionSuccess ? 'var(--teal2)' : currentColors.main }}
-              >
-                {isSavingSession ? (
-                  <div className="loader-spinner" style={{ width: '18px', height: '18px' }}></div>
-                ) : sessionSuccess ? (
-                  <><CheckCircle size={18} /> Relatório Salvo!</>
-                ) : (
-                  <><CheckCircle size={18} /> Finalizar e Salvar Relatório</>
-                )}
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       )}
     </div>

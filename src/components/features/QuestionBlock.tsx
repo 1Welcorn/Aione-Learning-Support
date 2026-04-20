@@ -401,12 +401,14 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
 
       {!isEditing && (
         <div className="q-footer">
-          <button 
-            className={`mediator-hint-btn ${showMediatorGuide ? 'active' : ''}`}
-            onClick={() => setShowMediatorGuide(!showMediatorGuide)}
-          >
-            <Info size={16} /> {showMediatorGuide ? 'Ocultar Guia' : 'Guia da Mediadora'}
-          </button>
+          {isAdmin && (
+            <button 
+              className={`mediator-hint-btn ${showMediatorGuide ? 'active' : ''}`}
+              onClick={() => setShowMediatorGuide(!showMediatorGuide)}
+            >
+              <Info size={16} /> {showMediatorGuide ? 'Ocultar Guia' : 'Guia da Mediadora'}
+            </button>
+          )}
           
           {showSuccess && <div className="save-badge"><CheckCircle size={14} /> Salvo!</div>}
         </div>

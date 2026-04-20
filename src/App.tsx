@@ -62,12 +62,18 @@ export const App: React.FC = () => {
     return <LoginScreen settings={settings} />;
   }
 
-  if (!units) {
+  if (!units || units.length === 0) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <h3>Erro de Carregamento</h3>
-        <p>As unidades não foram encontradas. Verifique se rodou o SQL no Supabase.</p>
-        <button onClick={() => window.location.reload()}>Recarregar</button>
+      <div style={{ padding: '40px 20px', textAlign: 'center', background: 'var(--bg)', minHeight: '100vh' }}>
+        <div className="loader-logo" style={{ marginBottom: '20px' }}>SAREH · 2026</div>
+        <h3 style={{ color: 'var(--ink2)', marginBottom: '10px' }}>Nenhuma Aula Encontrada</h3>
+        <p style={{ color: 'var(--ink4)', maxWidth: '400px', margin: '0 auto 24px' }}>
+          As unidades de ensino não foram carregadas. Isso geralmente acontece se as permissões (RLS) no Supabase não foram atualizadas para o seu e-mail.
+        </p>
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+          <button className="primary-btn" onClick={() => window.location.reload()} style={{ padding: '10px 20px' }}>Tentar Novamente</button>
+          {role === 'admin' && <button className="secondary-btn" onClick={() => setActiveTab('planning')} style={{ padding: '10px 20px' }}>Ir para Planejamento</button>}
+        </div>
       </div>
     );
   }
@@ -81,18 +87,22 @@ export const App: React.FC = () => {
           <div className="topbar-name">Ione Jordão Ribeiro</div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <span className={`role-badge ${role}`}>{role === 'admin' ? 'Admin' : 'Mediadora'}</span>
+          <span className={`role-badge ${role}`}>
+            {role === 'admin' ? 'Admin' : role === 'student' ? 'Estudante' : 'Mediadora'}
+          </span>
           <span className={`sync-dot ${syncStatus}`}></span><br />
-          <span style={{ fontSize: '11px', color: 'var(--ink4)' }}>{settings?.med_name || 'Prof. Willians'}</span>
+          <span style={{ fontSize: '11px', color: 'var(--ink4)' }}>
+            {role === 'student' ? 'Ione Jordão Ribeiro' : (settings?.med_name || 'Prof. Willians')}
+          </span>
         </div>
       </div>
 
       <nav className="bottom-nav" style={{ gridTemplateColumns: role === 'admin' ? 'repeat(5, 1fr)' : 'repeat(4, 1fr)' }}>
         <div className="sidebar-profile">
-          <div className="side-avatar">I</div>
+          <div className="side-avatar">{role === 'student' ? 'I' : 'G'}</div>
           <div className="side-profile-info">
-             <div className="side-name">Ione Ribeiro</div>
-             <div className="side-role">Estudante</div>
+             <div className="side-name">{role === 'student' ? 'Ione Ribeiro' : (settings?.med_name || 'Geocélia')}</div>
+             <div className="side-role">{role === 'student' ? 'Estudante' : 'Mediadora'}</div>
           </div>
         </div>
 
@@ -165,6 +175,7 @@ export const App: React.FC = () => {
                  onResetUnitAnswers={resetUnitAnswers} 
                  onUpdateSession={updateSession}
                  onDeleteSession={deleteSession}
+                 isAdmin={role === 'admin'}
                />
              </div>
           )}

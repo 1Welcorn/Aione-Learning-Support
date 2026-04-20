@@ -10,14 +10,16 @@ interface ProgressProps {
   onResetUnitAnswers: (uId: string) => void;
   onUpdateSession: (sId: string, note: string) => Promise<boolean>;
   onDeleteSession: (sId: string) => Promise<boolean>;
+  isAdmin?: boolean;
 }
 
 const SessionItem: React.FC<{ 
   session: Session, 
   unitTitle: string, 
   onUpdate: (id: string, note: string) => Promise<boolean>,
-  onDelete: (id: string) => Promise<boolean>
-}> = ({ session, unitTitle, onUpdate, onDelete }) => {
+  onDelete: (id: string) => Promise<boolean>,
+  isAdmin?: boolean
+}> = ({ session, unitTitle, onUpdate, onDelete, isAdmin }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [tempNote, setTempNote] = React.useState(session.note);
 
@@ -32,7 +34,7 @@ const SessionItem: React.FC<{
         <div className="log-date-pill">{session.session_date}</div>
         <div className="log-unit-tag">{unitTitle}</div>
         <div className="log-actions">
-           {!isEditing && (
+           {isAdmin && !isEditing && (
              <>
                <button className="log-action-btn edit" onClick={() => setIsEditing(true)}>
                  <Edit2 size={14} />
@@ -67,7 +69,7 @@ const SessionItem: React.FC<{
 };
 
 export const Progress: React.FC<ProgressProps> = ({ 
-  units, sessions, unitStatus, onResetUnitAnswers, onUpdateSession, onDeleteSession 
+  units, sessions, unitStatus, onResetUnitAnswers, onUpdateSession, onDeleteSession, isAdmin 
 }) => {
   const completedCount = Object.values(unitStatus).filter(Boolean).length;
   const totalCount = units.length;
@@ -164,18 +166,20 @@ export const Progress: React.FC<ProgressProps> = ({
               </div>
               <div className="prog-row-status" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
                  {isDone ? <span className="badge-done">FEITO</span> : <span className="badge-todo">PENDENTE</span>}
-                 <button 
-                   className="reset-mini-btn"
-                   title="Limpar respostas (progresso) desta unidade"
-                   onClick={(e) => {
-                     e.stopPropagation();
-                     if(window.confirm(`Deseja realmente limpar as respostas (progresso) da "${unit.title}"? Isso não apagará o conteúdo da aula.`)) {
-                       onResetUnitAnswers(unit.id);
-                     }
-                   }}
-                 >
-                   <RotateCcw size={14} />
-                 </button>
+                 {isAdmin && (
+                   <button 
+                     className="reset-mini-btn"
+                     title="Limpar respostas (progresso) desta unidade"
+                     onClick={(e) => {
+                       e.stopPropagation();
+                       if(window.confirm(`Deseja realmente limpar as respostas (progresso) da "${unit.title}"? Isso não apagará o conteúdo da aula.`)) {
+                         onResetUnitAnswers(unit.id);
+                       }
+                     }}
+                   >
+                     <RotateCcw size={14} />
+                   </button>
+                 )}
               </div>
             </div>
           );
@@ -197,6 +201,7 @@ export const Progress: React.FC<ProgressProps> = ({
               unitTitle={units.find(u => u.id === session.unit_id)?.title || 'Atendimento Geral'}
               onUpdate={onUpdateSession}
               onDelete={onDeleteSession}
+              isAdmin={isAdmin}
             />
           ))
         )}
