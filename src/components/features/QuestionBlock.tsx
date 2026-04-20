@@ -495,7 +495,7 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
                     return (
                       <button 
                         key={i}
-                        className={`modern-opt-btn ${isSelected ? 'selected' : ''} ${showResult && isCorrect ? 'reveal-correct' : ''} ${showResult && isSelected && !isCorrect ? 'reveal-wrong' : ''}`}
+                        className={`modern-opt-btn ${isSelected ? 'selected' : ''} ${isSelected && isCorrect ? 'reveal-correct' : ''} ${isSelected && !isCorrect ? 'reveal-wrong' : ''}`}
                         onClick={() => { setTempAnswer(opt); handleSave(opt); }}
                         style={{ '--brand': currentColors.main } as any}
                         disabled={!onSaveAnswer}
@@ -526,10 +526,14 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
                 <div className="modern-options-grid">
                   {question.opts?.map((opt, i) => {
                     const isSel = tempAnswer.split(', ').includes(opt);
+                    const isCorrect = Array.isArray(question.correctAnswer)
+                      ? question.correctAnswer.includes(opt)
+                      : opt === question.correctAnswer;
+                    
                     return (
                       <button 
                         key={i}
-                        className={`modern-opt-btn ${isSel ? 'selected' : ''}`}
+                        className={`modern-opt-btn ${isSel ? 'selected' : ''} ${isSel && isCorrect ? 'reveal-correct' : ''} ${isSel && !isCorrect ? 'reveal-wrong' : ''}`}
                         onClick={() => toggleCheckbox(opt)}
                         style={{ '--brand': currentColors.main } as any}
                         disabled={!onSaveAnswer}
