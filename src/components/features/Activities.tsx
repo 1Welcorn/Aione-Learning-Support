@@ -13,10 +13,11 @@ interface UnitCardProps {
   onSaveSession: (note: string) => Promise<boolean>;
   isAdmin?: boolean;
   onUpdateUnit?: (id: string, updates: Partial<Unit>) => Promise<boolean>;
+  isExpanded: boolean;
+  onToggle: () => void;
 }
 
-const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSaveSession, isAdmin, onUpdateUnit }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSaveSession, isAdmin, onUpdateUnit, isExpanded, onToggle }) => {
   const [note, setNote] = useState('');
   const [isSavingSession, setIsSavingSession] = useState(false);
   const [sessionSuccess, setSessionSuccess] = useState(false);
@@ -74,7 +75,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSave
       setNote('');
       setTimeout(() => {
         setSessionSuccess(false);
-        setIsExpanded(false);
+        onToggle();
       }, 2000);
     } else {
       window.alert('Erro ao salvar relatório. Verifique se você rodou o SQL de permissões para a Geocélia.');
@@ -89,7 +90,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSave
 
   return (
     <div className="unit-card">
-      <div className="unit-hdr" onClick={() => setIsExpanded(!isExpanded)}>
+      <div className="unit-hdr" onClick={onToggle}>
         <div className="unit-dot" style={{ background: currentColors.main }}></div>
         <div className="unit-info">
           <div className="unit-title-row">
@@ -310,6 +311,7 @@ export const Activities: React.FC<{
   onUpdateUnit?: (uId: string, updates: Partial<Unit>) => Promise<boolean>;
   onCreateUnit?: (title: string) => Promise<boolean>;
 }> = ({ units, answers, onSaveAnswer, onSaveSession, isAdmin, onUpdateUnit, onCreateUnit }) => {
+  const [expandedUnitId, setExpandedUnitId] = useState<string | null>(null);
   
   const handleCreateUnit = async () => {
     const title = window.prompt('Qual o título da nova unidade?');
@@ -329,6 +331,8 @@ export const Activities: React.FC<{
           onSaveSession={(note) => onSaveSession(unit.id, note)}
           isAdmin={isAdmin}
           onUpdateUnit={onUpdateUnit}
+          isExpanded={expandedUnitId === unit.id}
+          onToggle={() => setExpandedUnitId(expandedUnitId === unit.id ? null : unit.id)}
         />
       ))}
 
