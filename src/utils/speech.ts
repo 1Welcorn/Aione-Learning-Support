@@ -92,15 +92,16 @@ class SpeechService {
     this.synth.cancel();
 
     // Clean text: remove blank spaces like "_____" but keep tags and ? !
+    // Use '...' for internal underscores to create a pause
     let cleanedText = text
-      .replace(/[_\-.]{2,}/g, ' ') 
+      .replace(/[_\-.]{2,}/g, '... ') 
       .replace(/\s+/g, ' ')
       .trim();
 
     // Pedagogy: If the sentence ends with completion marks (underscores) or a simple period,
     // we force a '?' intonation so it sounds like a prompt for the student.
     if (text.includes('____') && !cleanedText.endsWith('!') && !cleanedText.endsWith('?')) {
-      cleanedText = cleanedText.replace(/\.?$/, '?');
+      cleanedText = cleanedText.replace(/[.? ]+$/, '?');
     }
 
     if (!cleanedText) return;
