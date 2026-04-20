@@ -30,7 +30,7 @@ const getUnitIcon = (title: string) => {
   return <GraduationCap size={36} strokeWidth={1.5} />;
 };
 
-const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSaveSession, isAdmin, onUpdateUnit, isExpanded, onToggle }) => {
+export const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSaveSession, isAdmin, onUpdateUnit, isExpanded, onToggle }) => {
   const [note, setNote] = useState('');
   const [isSavingSession, setIsSavingSession] = useState(false);
   const [sessionSuccess, setSessionSuccess] = useState(false);
@@ -340,7 +340,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSave
 };
 
 // Local helper for skill badges mapping
-const getSkillBadge = (tag: string) => {
+export const getSkillBadge = (tag: string) => {
   const map: Record<string, string> = {
     'D2': 'Vocabulário 🍎',
     'D3': 'Gramática ✍️',

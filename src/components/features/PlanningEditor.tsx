@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
-import { Save, Plus, Trash2, BookOpen, Target, Lightbulb, ChevronLeft } from 'lucide-react';
+import { Save, Plus, Trash2, BookOpen, Target, Lightbulb, ChevronLeft, Eye, X } from 'lucide-react';
+import { UnitCard } from './Activities';
 
 interface PlanningEditorProps {
   unitId: string;
@@ -11,6 +12,7 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
   const [loading, setLoading] = useState(true);
   const [unitData, setUnitData] = useState<any>(null);
   const [newWord, setNewWord] = useState("");
+  const [isPreviewing, setIsPreviewing] = useState(false);
 
   useEffect(() => {
     fetchUnit();
@@ -58,9 +60,14 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
             <p className="editor-subtitle">Configurando: {unitData.title}</p>
           </div>
         </div>
-        <button onClick={handleSave} className="save-plano-btn">
-          <Save size={20} /> SALVAR PLANO
-        </button>
+        <div className="header-right">
+          <button onClick={() => setIsPreviewing(true)} className="preview-plano-btn">
+            <Eye size={20} /> PREVIEW
+          </button>
+          <button onClick={handleSave} className="save-plano-btn">
+            <Save size={20} /> SALVAR PLANO
+          </button>
+        </div>
       </header>
 
       <div className="editor-grid">
@@ -137,7 +144,81 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
         </div>
       </div>
 
+      {isPreviewing && (
+        <div className="preview-overlay">
+          <div className="preview-modal">
+            <header className="preview-header">
+              <h3>Preview do Estudante</h3>
+              <button onClick={() => setIsPreviewing(false)} className="close-preview-btn">
+                <X size={24} />
+              </button>
+            </header>
+            <div className="preview-content">
+              <UnitCard 
+                unit={unitData}
+                answers={{}}
+                onSaveAnswer={async () => true}
+                onSaveSession={async () => true}
+                isExpanded={true}
+                onToggle={() => {}}
+                isAdmin={false}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
+        .header-right { display: flex; gap: 12px; }
+        .preview-plano-btn {
+          background: white;
+          color: #475569;
+          border: 1px solid #e2e8f0;
+          padding: 16px 24px;
+          border-radius: 20px;
+          font-weight: 900;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .preview-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.5);
+          backdrop-filter: blur(4px);
+          z-index: 3000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 40px;
+        }
+        .preview-modal {
+          background: #f8fafc;
+          width: 100%;
+          max-width: 1000px;
+          max-height: 90vh;
+          border-radius: 32px;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 0 40px 80px -20px rgba(0,0,0,0.3);
+        }
+        .preview-header {
+          padding: 24px 32px;
+          background: white;
+          border-bottom: 1px solid #e2e8f0;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .preview-header h3 { margin: 0; font-weight: 900; color: #1e293b; }
+        .close-preview-btn { background: none; border: none; color: #94a3b8; cursor: pointer; }
+        .preview-content {
+          padding: 32px;
+          overflow-y: auto;
+          flex: 1;
+        }
         .planning-editor-view {
           padding: 32px;
           background: #FDFBF7;
