@@ -12,11 +12,11 @@ interface UnitCardProps {
   onSaveAnswer: (qIdx: number, val: string) => Promise<boolean>;
   onSaveSession: (note: string) => Promise<boolean>;
   isAdmin?: boolean;
-  isMediator?: boolean;
+  isAdmin?: boolean;
   onUpdateUnit?: (id: string, updates: Partial<Unit>) => Promise<boolean>;
 }
 
-const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSaveSession, isAdmin, isMediator, onUpdateUnit }) => {
+const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSaveSession, isAdmin, onUpdateUnit }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [note, setNote] = useState('');
   const [isSavingSession, setIsSavingSession] = useState(false);
@@ -308,10 +308,9 @@ export const Activities: React.FC<{
   onSaveAnswer: (uId: string, qIdx: number, val: string) => Promise<boolean>; 
   onSaveSession: (uId: string, note: string) => Promise<boolean>;
   isAdmin?: boolean;
-  isMediator?: boolean;
   onUpdateUnit?: (uId: string, updates: Partial<Unit>) => Promise<boolean>;
   onCreateUnit?: (title: string) => Promise<boolean>;
-}> = ({ units, answers, onSaveAnswer, onSaveSession, isAdmin, isMediator, onUpdateUnit, onCreateUnit }) => {
+}> = ({ units, answers, onSaveAnswer, onSaveSession, isAdmin, onUpdateUnit, onCreateUnit }) => {
   
   const handleCreateUnit = async () => {
     const title = window.prompt('Qual o título da nova unidade?');
@@ -330,7 +329,6 @@ export const Activities: React.FC<{
           onSaveAnswer={(qIdx, val) => onSaveAnswer(unit.id, qIdx, val)}
           onSaveSession={(note) => onSaveSession(unit.id, note)}
           isAdmin={isAdmin}
-          isMediator={isMediator}
           onUpdateUnit={onUpdateUnit}
         />
       ))}
