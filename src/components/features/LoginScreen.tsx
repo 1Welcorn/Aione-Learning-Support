@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 
-export const LoginScreen: React.FC<{ settings: any }> = ({ settings }) => {
+export const LoginScreen: React.FC<{ settings: any }> = () => {
   const { 
     signInWithGoogle, 
     loading

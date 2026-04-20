@@ -11,7 +11,7 @@ class SpeechService {
     if (typeof window !== 'undefined') {
       this.synth = window.speechSynthesis;
       this.loadVoices();
-      if (this.synth.onvoiceschanged !== undefined) {
+      if (this.synth && this.synth.onvoiceschanged !== undefined) {
         this.synth.onvoiceschanged = this.loadVoices.bind(this);
       }
     }
@@ -52,21 +52,21 @@ class SpeechService {
         'female'
       ];
 
-      let enVoice = null;
+      let enVoice: SpeechSynthesisVoice | null = null;
       
       // First, look for a specific priority voice that is English
       for (const priority of voicePriorities) {
         enVoice = this.voices.find(v => 
           v.lang.startsWith('en') && 
           v.name.toLowerCase().includes(priority.toLowerCase())
-        );
+        ) || null;
         if (enVoice) break;
       }
 
       // Fallback to any English voice if no priority found
       if (!enVoice) {
         enVoice = this.voices.find(v => v.lang.startsWith('en-US')) || 
-                  v.lang.startsWith('en');
+                  this.voices.find(v => v.lang.startsWith('en')) || null;
       }
 
       if (enVoice) {
@@ -77,7 +77,9 @@ class SpeechService {
       utterance.pitch = 1.0;
       utterance.volume = 1.0; // Ensure volume is max
       
-      this.synth.speak(utterance);
+      if (this.synth) {
+        this.synth.speak(utterance);
+      }
     }, 50);
   }
 

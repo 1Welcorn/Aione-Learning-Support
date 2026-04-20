@@ -1,6 +1,4 @@
-import React from 'react';
-import { CircularProgress } from '../ui/CircularProgress';
-import { BookOpen, Star, ArrowRight, CheckCircle2, PlayCircle, Trophy, Sparkles, MessageCircle } from 'lucide-react';
+import { BookOpen, Star, ArrowRight, CheckCircle2, Trophy, Sparkles, MessageCircle } from 'lucide-react';
 import type { Unit } from '../../types';
 
 interface DashboardProps {
@@ -23,7 +21,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   sessionsCount,
   mediatorName,
   mediatorPhone,
-  studentEmail,
 }) => {
   const handleSupportClick = () => {
     const text = `Olá Prof. ${mediatorName}, sou a Ione! Preciso de uma ajuda com as atividades de hoje.`;
@@ -31,11 +28,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  const nextUnit = units.find(u => {
-    // A simple logic to find the first unit that is not fully done could go here if we had more state,
-    // but for now let's just show the first unit as "Next Up" or the current one.
-    return true; 
-  }) || units[0];
+  const nextUnit = units.find(() => true) || units[0];
 
   return (
     <div className="screen-home platform-view landing-style">

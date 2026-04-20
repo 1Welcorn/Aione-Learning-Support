@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Unit } from '../../types';
-import { Printer, Save } from 'lucide-react';
+import { Printer } from 'lucide-react';
 import { COLORS } from '../../constants';
 
 interface PlanningProps {

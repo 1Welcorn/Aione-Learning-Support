@@ -49,6 +49,8 @@ export interface AppSettings {
   admin_pin: string;
   med_pin: string;
   med_name: string;
+  med_phone?: string;
+  med_phone_2?: string;
   student_email: string;
 }
 
