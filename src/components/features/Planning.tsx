@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { Unit } from '../../types';
-import { Printer } from 'lucide-react';
+import { Printer, Save, CheckCircle } from 'lucide-react';
 import { COLORS } from '../../constants';
 
 interface PlanningProps {
@@ -9,6 +9,76 @@ interface PlanningProps {
   settings: any;
   onUpdateUnit: (id: string, field: string, val: any) => void;
 }
+
+const AdminUnitResourceRow: React.FC<{ 
+  unit: Unit, 
+  onSave: (id: string, field: string, val: any) => void 
+}> = ({ unit, onSave }) => {
+  const [embedText, setEmbedText] = useState(unit.embed_urls?.join('\n') || '');
+  const [descText, setDescText] = useState(unit.descriptors?.join(', ') || '');
+  const [isSaved, setIsSaved] = useState(false);
+
+  const handleSave = () => {
+    const urls = embedText.split('\n').map(v => v.trim()).filter(Boolean);
+    const descs = descText.split(',').map(v => v.trim()).filter(Boolean);
+    
+    onSave(unit.id, 'embed_urls', urls);
+    onSave(unit.id, 'descriptors', descs);
+    
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 3000);
+  };
+
+  return (
+    <div className="admin-unit-card">
+      <div className="admin-unit-header">
+        <div className="unit-dot" style={{ background: COLORS[unit.color]?.main || 'var(--teal)' }}></div>
+        <strong>{unit.title}</strong>
+      </div>
+      
+      <div className="admin-form-group">
+        <label>Atividades HTML (Wordwall, etc.) - Uma por linha</label>
+        <textarea 
+          rows={3}
+          placeholder="https://wordwall.net/embed/..."
+          value={embedText}
+          onChange={(e) => setEmbedText(e.target.value)}
+          style={{ 
+            width: '100%', 
+            padding: '12px', 
+            borderRadius: '12px', 
+            border: '2px solid var(--border)', 
+            background: 'var(--bg)',
+            fontSize: '13px',
+            resize: 'vertical'
+          }}
+        />
+      </div>
+
+      <div className="admin-form-group">
+        <label>Descritores BNCC (D3, D5, D12... separados por vírgula)</label>
+        <input 
+          type="text" 
+          placeholder="D3, D5, D12..."
+          value={descText}
+          onChange={(e) => setDescText(e.target.value)}
+        />
+      </div>
+
+      <button 
+        className={`confirm-session-btn ${isSaved ? 'success' : ''}`}
+        onClick={handleSave}
+        style={{ 
+          marginTop: '10px', 
+          width: '100%',
+          background: isSaved ? 'var(--teal)' : COLORS[unit.color]?.main || 'var(--teal)'
+        }}
+      >
+        {isSaved ? <><CheckCircle size={18} /> Salvo!</> : <><Save size={18} /> Salvar Recursos</>}
+      </button>
+    </div>
+  );
+};
 
 export const Planning: React.FC<PlanningProps> = ({ units, isAdmin, settings, onUpdateUnit }) => {
   const handlePrint = () => {
@@ -134,47 +204,11 @@ export const Planning: React.FC<PlanningProps> = ({ units, isAdmin, settings, on
           
           <div className="admin-units-grid">
             {units.map(unit => (
-              <div key={unit.id} className="admin-unit-card">
-                <div className="admin-unit-header">
-                  <div className="unit-dot" style={{ background: COLORS[unit.color]?.main || 'var(--teal)' }}></div>
-                  <strong>{unit.title}</strong>
-                </div>
-                
-                <div className="admin-form-group">
-                  <label>URLs de Atividades HTML (Uma por linha)</label>
-                  <textarea 
-                    rows={3}
-                    placeholder="https://wordwall.net/embed/..."
-                    defaultValue={unit.embed_urls?.join('\n') || ''}
-                    onBlur={(e) => {
-                      const urls = e.target.value.split('\n').map(v => v.trim()).filter(Boolean);
-                      onUpdateUnit(unit.id, 'embed_urls', urls);
-                    }}
-                    style={{ 
-                      width: '100%', 
-                      padding: '12px', 
-                      borderRadius: '12px', 
-                      border: '2px solid var(--border)', 
-                      background: 'var(--bg)',
-                      fontSize: '13px',
-                      resize: 'vertical'
-                    }}
-                  />
-                </div>
-
-                <div className="admin-form-group">
-                  <label>Descritores (separados por vírgula)</label>
-                  <input 
-                    type="text" 
-                    placeholder="D3, D5, D12..."
-                    defaultValue={unit.descriptors?.join(', ') || ''}
-                    onBlur={(e) => {
-                      const vals = e.target.value.split(',').map(v => v.trim()).filter(Boolean);
-                      onUpdateUnit(unit.id, 'descriptors', vals);
-                    }}
-                  />
-                </div>
-              </div>
+              <AdminUnitResourceRow 
+                key={unit.id} 
+                unit={unit} 
+                onSave={onUpdateUnit} 
+              />
             ))}
           </div>
         </div>
