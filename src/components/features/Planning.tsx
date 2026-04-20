@@ -206,14 +206,14 @@ export const Planning: React.FC<PlanningProps> = ({ units, isAdmin, settings, on
         <div className="official-document-header">
           <div className="header-top-row">
             <div className="inst-logo-placeholder">
-              <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6A6R4P6P8Qz_QyXzV8p_M_O_eL_R0_V_o_g&s" alt="Logo Escola" className="doc-logo" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Bras%C3%A3o_do_Paran%C3%A1.svg/500px-Bras%C3%A3o_do_Paran%C3%A1.svg.png" alt="Logo Escola" className="doc-logo" />
             </div>
             <div className="inst-text">
               <div className="inst-name">COLÉGIO ESTADUAL NOSSA SENHORA DE LOURDES</div>
               <div className="inst-levels">ENSINO FUNDAMENTAL, MÉDIO E PROFISSIONAL</div>
             </div>
             <div className="inst-logo-placeholder">
-               <img src="https://logodownload.org/wp-content/uploads/2014/10/parana-logo-8.png" alt="Logo PR" className="doc-logo" />
+               <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Logo_Governo_Paran%C3%A1_2019.png/800px-Logo_Governo_Paran%C3%A1_2019.png" alt="Logo PR" className="doc-logo" />
             </div>
           </div>
           
