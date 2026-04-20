@@ -82,7 +82,7 @@ const AdminUnitResourceRow: React.FC<{
           <label style={{ margin: 0 }}>Atividades Interativas ({embedUrls.length})</label>
           {embedUrls.length > 0 && (
             <button className="text-danger-btn" onClick={clearAllEmbeds} style={{ fontSize: '11px' }}>
-              Limpar Tudo
+              Limpar Interativas
             </button>
           )}
         </div>
@@ -114,7 +114,7 @@ const AdminUnitResourceRow: React.FC<{
           <label style={{ margin: 0 }}>Perguntas da Lição ({questions.length})</label>
           {questions.length > 0 && (
             <button className="text-danger-btn" onClick={clearAllQuestions} style={{ fontSize: '11px' }}>
-              Limpar Tudo
+              Limpar Perguntas
             </button>
           )}
         </div>

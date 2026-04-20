@@ -166,10 +166,10 @@ export const Progress: React.FC<ProgressProps> = ({
                  {isDone ? <span className="badge-done">FEITO</span> : <span className="badge-todo">PENDENTE</span>}
                  <button 
                    className="reset-mini-btn"
-                   title="Resetar progresso desta unidade"
+                   title="Limpar respostas (progresso) desta unidade"
                    onClick={(e) => {
                      e.stopPropagation();
-                     if(window.confirm(`Deseja realmente resetar as respostas da "${unit.title}"?`)) {
+                     if(window.confirm(`Deseja realmente limpar as respostas (progresso) da "${unit.title}"? Isso não apagará o conteúdo da aula.`)) {
                        onResetUnitAnswers(unit.id);
                      }
                    }}
