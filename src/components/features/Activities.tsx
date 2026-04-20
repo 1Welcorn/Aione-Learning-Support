@@ -166,18 +166,8 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSave
               <div className="embed-scroll-grid">
                 {unit.embed_urls.filter(u => u.trim()).map((url, idx) => (
                   <div key={idx} className="embed-block">
-                    {isAdmin && (
-                      <div className="admin-inline-actions on-embed">
-                        <button className="admin-mini-btn" onClick={() => { setEditingEmbedIdx(idx); setTempEmbedUrl(url); }}>
-                          <Edit2 size={14} />
-                        </button>
-                        <button className="admin-mini-btn del" onClick={() => deleteEmbed(idx)}>
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    )}
-                    <div className="embed-label" style={{ color: currentColors.main, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="embed-label" style={{ color: currentColors.main, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
                         {editingEmbedIdx === idx ? (
                           <div className="admin-inline-edit-box">
                             <input 
@@ -194,17 +184,30 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSave
                         )}
                       </div>
                       
-                      {isMediator && (
-                        <label className="embed-check-label" style={{ fontSize: '11px', color: 'var(--ink4)', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
-                          <span>Concluída?</span>
-                          <input 
-                            type="checkbox" 
-                            checked={!!answers[`${unit.id}-${1000 + idx}`]?.is_done}
-                            onChange={(e) => onSaveAnswer(1000 + idx, e.target.checked ? 'COMPLETA' : '')}
-                            style={{ width: '16px', height: '16px', accentColor: currentColors.main }}
-                          />
-                        </label>
-                      )}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                        {isMediator && (
+                          <label className="embed-check-label" style={{ fontSize: '11px', color: 'var(--ink4)', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                            <span>Concluída?</span>
+                            <input 
+                              type="checkbox" 
+                              checked={!!answers[`${unit.id}-${1000 + idx}`]?.is_done}
+                              onChange={(e) => onSaveAnswer(1000 + idx, e.target.checked ? 'COMPLETA' : '')}
+                              style={{ width: '16px', height: '16px', accentColor: currentColors.main }}
+                            />
+                          </label>
+                        )}
+
+                        {isAdmin && (
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button className="admin-mini-btn" style={{ padding: '4px', height: '24px', width: '24px' }} onClick={() => { setEditingEmbedIdx(idx); setTempEmbedUrl(url); }}>
+                              <Edit2 size={12} />
+                            </button>
+                            <button className="admin-mini-btn del" style={{ padding: '4px', height: '24px', width: '24px' }} onClick={() => deleteEmbed(idx)}>
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="iframe-responsive">
                       <iframe 
