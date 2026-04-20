@@ -1,7 +1,5 @@
-import { BookOpen, Star, ArrowRight, CheckCircle2, Trophy, Sparkles, MessageCircle, Flame } from 'lucide-react';
+import { BookOpen, Star, ArrowRight, CheckCircle2, Trophy, Sparkles, MessageCircle, Flame, Rocket, Play } from 'lucide-react';
 import type { Unit } from '../../types';
-import robot3d from '../../assets/robot-3d.png';
-import pan3d from '../../assets/pan-3d.png';
 
 interface DashboardProps {
   onNavigate: (screen: string) => void;
@@ -38,97 +36,92 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="screen-home platform-view landing-style">
-      {/* BACKGROUND BLOBS */}
-      <div className="bg-blob blob-1"></div>
-      <div className="bg-blob blob-2"></div>
-      <div className="bg-blob blob-3"></div>
-
       {/* HERO SECTION - PROFILE CARD */}
-      <div className="dashboard-top-row">
-        <div className="profile-hero-mini">
-          <div className="avatar-mini-container">
-            <img 
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Ione" 
-              alt="Avatar" 
-              className="avatar-mini-img"
-            />
-            <div className="level-tag">LVL 1</div>
+      <div className="adventure-header">
+        <div className="kid-profile">
+          <div className="kid-avatar-wrapper">
+             <div className="kid-avatar">I</div>
+             <div className="kid-level">Lvl 1</div>
           </div>
-          <div className="profile-mini-text">
-            <h1 className="profile-mini-title">Olá, Ione! 👋</h1>
-            <p className="profile-mini-sub">Você já conquistou {completedPct}% da sua jornada!</p>
+          <div className="kid-text">
+            <h1 className="kid-name">Oi, Ione! 🌟</h1>
+            <p className="kid-sub">Você já completou {completedPct}% da aventura!</p>
           </div>
         </div>
 
-        <div className="stats-mini-bar">
-          <div className="stat-pill-v2">
-            <Star className="text-yellow-400 fill-yellow-400" size={20} />
-            <span className="font-black text-slate-700">{sessionsCount * 10} Estrelas</span>
+        <div className="kid-stats">
+          <div className="kid-stat-pill orange">
+            <Star size={20} fill="currentColor" />
+            <span>{sessionsCount * 10}</span>
           </div>
-          <div className="stat-pill-v2">
-            <Flame className="text-orange-500" size={20} />
-            <span className="font-black text-slate-700">3 dias!</span>
+          <div className="kid-stat-pill blue">
+            <Flame size={20} fill="currentColor" />
+            <span>3 Dias</span>
           </div>
         </div>
       </div>
 
-      {/* NEXT UP / MISSION CARD */}
-      <div className="mission-card" onClick={() => onNavigate('activities')}>
-        <div className="mission-content">
-          <span className="mission-tag">CONTINUAR ESTUDOS</span>
-          <h2 className="mission-title">
-             🚀 SUA MISSÃO ATUAL: {nextUnit?.title || 'Unidade 2'}
-          </h2>
-          <p className="mission-quote">
-            "{nextUnit?.sub?.split('·')[0]?.trim() || 'Prepare-se para o próximo passo!'}"
-          </p>
+      {/* FLOATING MISSION CARD */}
+      <div className="mission-island-container">
+        <div className="mission-island" onClick={() => onNavigate('activities')}>
+          <div className="mission-tag-v4">SUA MISSÃO AGORA</div>
+          <h2 className="mission-title-v4">{nextUnit?.title || 'Unidade 2'}</h2>
+          <p className="mission-subtitle-v4">"{nextUnit?.sub?.split('·')[0]?.trim() || 'Vamos aprender algo novo?'}"</p>
           
-          <button className="mission-btn">
-            PARTIU! ⚡
+          <button className="mission-go-btn">
+            COMEÇAR! <Play size={20} fill="currentColor" />
           </button>
-        </div>
-
-        <div className="mission-visual">
-           <img src={robot3d} alt="Robot" className="mission-robot" />
+          
+          <div className="mission-decoration">
+            <Rocket size={80} color="rgba(255,255,255,0.2)" />
+          </div>
         </div>
       </div>
 
-      {/* CURRICULUM JOURNEY */}
-      <div className="journey-section">
-        <div className="journey-header">
-           <h2 className="journey-title">🚀 SUA JORNADA DE CONQUISTAS</h2>
+      {/* ADVENTURE TRAIL */}
+      <div className="adventure-trail-section">
+        <div className="trail-title-group">
+          <h2 className="trail-title">Caminho do Conhecimento</h2>
+          <div className="trail-subtitle">Siga os passos para ganhar estrelas!</div>
         </div>
 
-        <div className="journey-trail">
+        <div className="adventure-path">
+          <div className="path-line-main"></div>
+          
           {units.map((unit, idx) => {
              const questionsDone = unit.questions?.filter((_, i) => answers[`${unit.id}-${i}`]?.is_done).length || 0;
              const totalQuestions = unit.questions?.length || 1;
              const isDone = questionsDone === totalQuestions;
              const isLocked = idx > 0 && !units[idx-1].questions.every((_, i) => answers[`${units[idx-1].id}-${i}`]?.is_done);
              
+             // Vibrant colors for islands
+             const colors = ['#FF6B6B', '#4ECDC4', '#FFD93D', '#6C5CE7', '#FF8E3C', '#2ECC71'];
+             const color = colors[idx % colors.length];
+
              return (
               <div 
                 key={unit.id} 
-                className={`journey-node ${isDone ? 'is-done' : ''} ${isLocked ? 'is-locked' : ''}`}
+                className={`adventure-node ${isDone ? 'is-complete' : ''} ${isLocked ? 'is-locked' : ''} ${idx % 2 === 0 ? 'left' : 'right'}`}
                 onClick={() => !isLocked && onNavigate('activities')}
               >
-                <div className="node-connector"></div>
-                <div className="journey-card-v3">
-                  <div className="node-icon-bg-v3" style={{ background: isDone ? '#dcfce7' : '#f1f5f9' }}>
-                    {isDone ? <ChefHat size={32} color="#10b981" /> : <Trophy size={32} color="#94a3b8" />}
-                  </div>
-                  
-                  <div className="journey-node-info">
-                    <p className="node-status-tag">{isDone ? 'ETAPA ' + (idx + 1) + ' • CONCLUÍDO' : 'ETAPA ' + (idx + 1) + ' • BLOQUEADO'}</p>
-                    <h3 className="node-card-title-v3">{unit.title}</h3>
-                    <p className="node-card-stat-v3">{questionsDone}/{totalQuestions} Atividades</p>
-                  </div>
-
-                  <div className="journey-node-visual">
-                     {idx === 0 && <img src={pan3d} alt="Pan" className="node-3d-img-multiply" />}
-                     {!isDone && !isLocked && <div className="node-lock-v3">🔓</div>}
-                     {isDone && <div className="node-done-check-v3">COMPLETO</div>}
-                  </div>
+                <div className="island-node" style={{ backgroundColor: isLocked ? '#E2E8F0' : color }}>
+                   <div className="island-icon">
+                      {isDone ? <CheckCircle2 size={32} /> : 
+                       isLocked ? <Trophy size={32} /> : 
+                       <Sparkles size={32} />}
+                   </div>
+                   {isDone && <div className="island-badge">✓</div>}
+                </div>
+                
+                <div className="island-info">
+                   <div className="island-unit-num">MÓDULO {idx + 1}</div>
+                   <h3 className="island-title">{unit.title}</h3>
+                   <div className="island-progress">
+                      <div className="progress-bar-mini">
+                         <div className="progress-fill-mini" style={{ width: `${(questionsDone/totalQuestions)*100}%`, backgroundColor: color }}></div>
+                      </div>
+                      <span>{questionsDone}/{totalQuestions}</span>
+                   </div>
                 </div>
               </div>
              );
