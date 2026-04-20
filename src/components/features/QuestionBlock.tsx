@@ -217,6 +217,9 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
                 <option value="scale">Escala linear</option>
               </select>
             </div>
+            <div style={{ fontSize: '10px', color: 'var(--ink4)', marginTop: '-12px', marginBottom: '16px', opacity: 0.8 }}>
+              Leitura Inteligente: Use <strong>[PT]texto[/PT]</strong> e <strong>[EN]text[/EN]</strong> para alternar vozes.
+            </div>
 
             <div className="editor-tts-controls" style={{ display: 'flex', gap: '20px', margin: '12px 0', padding: '10px', background: 'var(--bg2)', borderRadius: '8px' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>

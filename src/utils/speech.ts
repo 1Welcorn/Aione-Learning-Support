@@ -63,7 +63,7 @@ class SpeechService {
   }
 
   /**
-   * Speaks the given text with automatic language detection and slower pace.
+   * Speaks the given text, supporting [PT] and [EN] tags for mixed language reading.
    */
   public speak(text: string) {
     if (!this.synth) {
@@ -74,34 +74,82 @@ class SpeechService {
     // Cancel any ongoing speech
     this.synth.cancel();
 
-    // Clean text: remove blank spaces like "_____" but keep ? and !
+    // Clean text: remove blank spaces like "_____" but keep tags and ? !
     const cleanedText = text
-      .replace(/[_\-.]{2,}/g, ' ') // Remove sequences of underscores, dashes or dots
-      .replace(/\s+/g, ' ')       // Unify spaces
+      .replace(/[_\-.]{2,}/g, ' ') 
+      .replace(/\s+/g, ' ')
       .trim();
 
     if (!cleanedText) return;
 
-    const lang = this.detectLanguage(cleanedText);
-    const voice = this.getBestVoice(lang);
-
+    const chunks = this.parseChunks(cleanedText);
+    
     // Small delay to ensure previous speech is fully cancelled
     setTimeout(() => {
-      const utterance = new SpeechSynthesisUtterance(cleanedText);
-      utterance.lang = lang;
-      
-      if (voice) {
-        utterance.voice = voice;
-      }
-
-      utterance.rate = 0.8; // Slower rate for better comprehension
-      utterance.pitch = 1.0;
-      utterance.volume = 1.0;
-      
-      if (this.synth) {
-        this.synth.speak(utterance);
-      }
+      this.speakSequential(chunks);
     }, 50);
+  }
+
+  private parseChunks(text: string): { text: string; lang: 'pt-BR' | 'en-US' }[] {
+    // Regex to match [PT]...[/PT] or [EN]...[/EN]
+    const regex = /\[(PT|EN)\](.*?)\[\/\1\]/gi;
+    const chunks: { text: string; lang: 'pt-BR' | 'en-US' }[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+      // Add text before the tag (use auto-detect)
+      const before = text.substring(lastIndex, match.index).trim();
+      if (before) {
+        chunks.push({ text: before, lang: this.detectLanguage(before) });
+      }
+      
+      // Add tagged text
+      const lang = match[1].toUpperCase() === 'PT' ? 'pt-BR' : 'en-US';
+      const content = match[2].trim();
+      if (content) {
+        chunks.push({ text: content, lang });
+      }
+      
+      lastIndex = regex.lastIndex;
+    }
+
+    // Add remaining text
+    const after = text.substring(lastIndex).trim();
+    if (after) {
+      chunks.push({ text: after, lang: this.detectLanguage(after) });
+    }
+
+    // If no tags were found, we have one chunk from the start
+    if (chunks.length === 0 && text) {
+      chunks.push({ text: text, lang: this.detectLanguage(text) });
+    }
+
+    return chunks;
+  }
+
+  private speakSequential(chunks: { text: string; lang: 'pt-BR' | 'en-US' }[]) {
+    if (!this.synth || chunks.length === 0) return;
+
+    const current = chunks[0];
+    const utterance = new SpeechSynthesisUtterance(current.text);
+    utterance.lang = current.lang;
+    utterance.voice = this.getBestVoice(current.lang);
+    utterance.rate = 0.8;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    utterance.onend = () => {
+      // Speak next chunk
+      this.speakSequential(chunks.slice(1));
+    };
+
+    utterance.onerror = (e) => {
+      console.error('Speech error:', e);
+      this.speakSequential(chunks.slice(1));
+    };
+
+    this.synth.speak(utterance);
   }
 
   /**
