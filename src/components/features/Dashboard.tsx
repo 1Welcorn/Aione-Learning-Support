@@ -28,7 +28,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  const nextUnit = units.find(() => true) || units[0];
+  const nextUnit = units.find(unit => {
+    const questionsDone = unit.questions?.filter((_, i) => answers[`${unit.id}-${i}`]?.is_done).length || 0;
+    const totalQuestions = unit.questions?.length || 0;
+    return questionsDone < totalQuestions;
+  }) || units[0];
 
   return (
     <div className="screen-home platform-view landing-style">
