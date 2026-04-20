@@ -52,20 +52,10 @@ class SpeechService {
 
     // Aggressive priority for Portuguese, looking for Male voices first as requested
     const priorities = langPrefix === 'pt'
-      ? ['Natural', 'Microsoft Daniel', 'Daniel', 'Antonio', 'Google português do Brasil', 'Microsoft Maria', 'Microsoft Heloisa', 'Daniela', 'Heloisa', 'Maria', 'Portuguese']
-      : ['Natural', 'Google US English', 'Samantha', 'Microsoft Zira', 'Aria', 'English'];
+      ? ['Microsoft Daniel', 'Daniel', 'Antonio', 'Google português do Brasil', 'Microsoft Maria', 'Microsoft Heloisa', 'Daniela', 'Heloisa', 'Maria', 'Portuguese']
+      : ['Google US English', 'Samantha', 'Microsoft Zira', 'Aria', 'English'];
 
-    // 1. Try finding by priority name AND lang prefix (prefer non-local voices if possible)
-    for (const p of priorities) {
-      const voice = this.voices.find(v => 
-        v.lang.toLowerCase().startsWith(langPrefix) && 
-        v.name.toLowerCase().includes(p.toLowerCase()) &&
-        !v.localService
-      );
-      if (voice) return voice;
-    }
-
-    // 2. Try priority name without localService check
+    // Try finding the best match by checking the priorities in order
     for (const p of priorities) {
       const voice = this.voices.find(v => 
         v.lang.toLowerCase().startsWith(langPrefix) && 
