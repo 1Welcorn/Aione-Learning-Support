@@ -23,6 +23,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSave
   
   const [editingEmbedIdx, setEditingEmbedIdx] = useState<number | null>(null);
   const [tempEmbedUrl, setTempEmbedUrl] = useState('');
+  const [showBrief, setShowBrief] = useState(false);
 
   const currentColors = COLORS[unit.color] || COLORS.teal;
 
@@ -111,10 +112,22 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSave
 
       {isExpanded && (
         <div className="unit-body">
-          {isAdmin && unit.brief && (
-            <div className="mediator-brief">
-              <div className="brief-label">Guia Geral da Mediadora</div>
-              {unit.brief}
+          {unit.brief && (
+            <div className="mediator-brief-container">
+              <button 
+                className={`mediator-hint-btn ${showBrief ? 'active' : ''}`}
+                onClick={() => setShowBrief(!showBrief)}
+                style={{ marginBottom: showBrief ? '12px' : '0' }}
+              >
+                <FileText size={16} /> {showBrief ? 'Ocultar Guia da Mediadora' : 'Ver Guia da Mediadora'}
+              </button>
+              
+              {showBrief && (
+                <div className="mediator-brief">
+                  <div className="brief-label">Guia Geral da Mediadora</div>
+                  {unit.brief}
+                </div>
+              )}
             </div>
           )}
 
@@ -208,8 +221,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSave
             </div>
           )}
 
-          {isAdmin && (
-            <div className="session-reporting-card">
+          <div className="session-reporting-card">
               <div className="reporting-header">
                 <FileText size={20} style={{ color: currentColors.main }} />
                 <div className="reporting-title">Relatório de Atendimento</div>
@@ -240,7 +252,6 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSave
                 </button>
               </div>
             </div>
-          )}
         </div>
       )}
     </div>
