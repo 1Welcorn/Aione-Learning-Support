@@ -12,7 +12,6 @@ interface UnitCardProps {
   onSaveAnswer: (qIdx: number, val: string) => Promise<boolean>;
   onSaveSession: (note: string) => Promise<boolean>;
   isAdmin?: boolean;
-  isAdmin?: boolean;
   onUpdateUnit?: (id: string, updates: Partial<Unit>) => Promise<boolean>;
 }
 
