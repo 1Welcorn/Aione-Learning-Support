@@ -334,10 +334,15 @@ export const Planning: React.FC<PlanningProps> = ({ units, isAdmin, settings, on
           .no-print, nav, .topbar { display: none !important; }
           .screen { padding: 0 !important; margin: 0 !important; }
           .plan-table-wrap { width: 100% !important; margin: 0 !important; overflow: visible !important; }
-          .plan-table { font-size: 10px !important; border-collapse: collapse !important; width: 100% !important; }
-          .plan-table th, .plan-table td { border: 1px solid #000 !important; padding: 6px !important; }
-          .print-only-header { display: block !important; }
-          body { background: #fff !important; }
+          .plan-table { font-size: 11px !important; border-collapse: collapse !important; width: 100% !important; border: 1px solid #000 !important; }
+          .plan-table th, .plan-table td { border: 1px solid #000 !important; padding: 12px 8px !important; vertical-align: top !important; line-height: 1.4 !important; }
+          .official-document-header { margin-bottom: 20px !important; }
+          .meta-table td { padding: 8px !important; border: 1px solid #000 !important; }
+          body { background: #fff !important; color: #000 !important; }
+        }
+        .plan-table.official td {
+          min-height: 100px;
+          white-space: pre-wrap;
         }
       `}</style>
     </div>
