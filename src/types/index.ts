@@ -10,6 +10,8 @@ export interface Question {
   correctAnswer?: string | string[];
   imageUrl?: string;
   audioUrl?: string;
+  ttsEnabled?: boolean;
+  ttsOptionsEnabled?: boolean;
 }
 
 export interface ExternalLink {

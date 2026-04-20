@@ -39,9 +39,17 @@ class SpeechService {
     // Cancel any ongoing speech
     this.synth.cancel();
 
+    // Clean text: remove blank spaces like "_____" but keep ? and !
+    const cleanedText = text
+      .replace(/[_\-.]{2,}/g, ' ') // Remove sequences of underscores, dashes or dots
+      .replace(/\s+/g, ' ')       // Unify spaces
+      .trim();
+
+    if (!cleanedText) return;
+
     // Small delay to ensure previous speech is fully cancelled
     setTimeout(() => {
-      const utterance = new SpeechSynthesisUtterance(text);
+      const utterance = new SpeechSynthesisUtterance(cleanedText);
       
       // Prioritize a "modern woman's" voice
       const voicePriorities = [

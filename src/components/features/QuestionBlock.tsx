@@ -40,6 +40,8 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
   );
   const [editImage, setEditImage] = useState(question.imageUrl || '');
   const [editAudio, setEditAudio] = useState(question.audioUrl || '');
+  const [editTtsEnabled, setEditTtsEnabled] = useState(question.ttsEnabled ?? true);
+  const [editTtsOptionsEnabled, setEditTtsOptionsEnabled] = useState(question.ttsOptionsEnabled ?? false);
   
   const currentColors = COLORS[color] || COLORS.teal;
   
@@ -110,7 +112,9 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
       hint: editHint,
       correctAnswer: editCorrect,
       imageUrl: editImage,
-      audioUrl: editAudio
+      audioUrl: editAudio,
+      ttsEnabled: editTtsEnabled,
+      ttsOptionsEnabled: editTtsOptionsEnabled
     });
     setIsEditing(false);
   };
@@ -212,6 +216,25 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
                 <option value="checkbox">Caixas de seleção</option>
                 <option value="scale">Escala linear</option>
               </select>
+            </div>
+
+            <div className="editor-tts-controls" style={{ display: 'flex', gap: '20px', margin: '12px 0', padding: '10px', background: 'var(--bg2)', borderRadius: '8px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                <input 
+                  type="checkbox" 
+                  checked={editTtsEnabled} 
+                  onChange={(e) => setEditTtsEnabled(e.target.checked)} 
+                />
+                Permitir leitura da Pergunta (TTS)
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                <input 
+                  type="checkbox" 
+                  checked={editTtsOptionsEnabled} 
+                  onChange={(e) => setEditTtsOptionsEnabled(e.target.checked)} 
+                />
+                Permitir leitura das Alternativas (TTS)
+              </label>
             </div>
 
             {['mc', 'checkbox'].includes(editType) && (
@@ -362,7 +385,7 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
           <>
             <div className="q-text">
               {question.q}
-              {(!/\b(o|a|os|as|um|uma|que|é|significa|mostra|o que|qual|como|onde|quem)\b/i.test(question.q) || question.audioUrl) && (
+              {(question.ttsEnabled !== false) && (
                 <button 
                   className="speech-mini-btn" 
                   onClick={() => {
@@ -443,6 +466,18 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
                       >
                         <div className="opt-circle">{isSelected && <div className="inner" />}</div>
                         <span>{opt}</span>
+                        {question.ttsOptionsEnabled && (
+                          <button 
+                            className="speech-opt-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              speechService.speak(opt);
+                            }}
+                            style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--ink4)', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                          >
+                            <Volume2 size={14} />
+                          </button>
+                        )}
                         {showResult && isCorrect && <Check size={14} className="result-icon" />}
                         {showResult && isSelected && !isCorrect && <X size={14} className="result-icon" />}
                       </button>
@@ -465,6 +500,18 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
                       >
                         <div className="opt-square">{isSel && <Check size={12} />}</div>
                         <span>{opt}</span>
+                        {question.ttsOptionsEnabled && (
+                          <button 
+                            className="speech-opt-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              speechService.speak(opt);
+                            }}
+                            style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--ink4)', padding: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                          >
+                            <Volume2 size={14} />
+                          </button>
+                        )}
                       </button>
                     );
                   })}
