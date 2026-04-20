@@ -104,12 +104,26 @@ export const useSarehData = () => {
   };
 
   const saveSession = async (unitId: string, note: string) => {
-    const { error } = await supabase.from('sessions').insert({
-      unit_id: unitId,
-      session_date: new Date().toLocaleDateString('pt-BR'),
-      note
-    });
-    if (error) console.error('Error saving session:', error);
+    try {
+      const { data, error } = await supabase.from('sessions').insert({
+        unit_id: unitId,
+        session_date: new Date().toLocaleDateString('pt-BR'),
+        note
+      }).select().single();
+      
+      if (error) {
+        console.error('Error saving session:', error);
+        return false;
+      }
+      
+      if (data) {
+        setSessions(prev => [data, ...prev]);
+      }
+      return true;
+    } catch (err) {
+      console.error('Exception in saveSession:', err);
+      return false;
+    }
   };
 
   const resetUnitAnswers = async (unitId: string) => {
@@ -173,6 +187,41 @@ export const useSarehData = () => {
     }
   };
 
+  const createUnit = async (title: string) => {
+    try {
+      const newId = `u${Date.now()}`;
+      const newUnit: Unit = {
+        id: newId,
+        title: title || 'Nova Unidade',
+        sub: 'Nova aula · 10 min',
+        color: 'teal',
+        sort_order: units.length,
+        brief: 'Resumo da nova aula...',
+        plan_c: 'Conteúdo',
+        plan_h: 'Habilidade',
+        plan_e: 'Estratégia',
+        plan_a: 'Avaliação',
+        wa: 'Oi! Nova aula...',
+        embed_urls: [],
+        descriptors: [],
+        questions: [],
+        external_links: []
+      };
+
+      const { error } = await supabase.from('units').insert(newUnit);
+      if (error) {
+        console.error('Error creating unit:', error);
+        return false;
+      }
+      
+      setUnits(prev => [...prev, newUnit]);
+      return true;
+    } catch (err) {
+      console.error('Exception in createUnit:', err);
+      return false;
+    }
+  };
+
   const updateUnit = async (id: string, updates: Partial<Unit>) => {
     const { error } = await supabase.from('units').update(updates).eq('id', id);
     if (error) {
@@ -196,6 +245,7 @@ export const useSarehData = () => {
     deleteSession,
     resetUnitAnswers,
     updateUnit,
+    createUnit,
     refresh: fetchData
   };
 };

@@ -1,9 +1,12 @@
+export type QuestionType = 'mc' | 'text' | 'paragraph' | 'checkbox' | 'scale';
+
 export interface Question {
   q: string;
-  type: 'mc' | 'text';
+  type: QuestionType;
   opts?: string[];
   hint?: string;
   mediator?: string;
+  scaleMax?: number;
 }
 
 export interface ExternalLink {

@@ -19,7 +19,7 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('home');
   const { 
     units, sessions, answers, settings, loading, syncStatus, 
-    saveAnswer, saveSession, updateSession, deleteSession, resetUnitAnswers, updateUnit 
+    saveAnswer, saveSession, updateSession, deleteSession, resetUnitAnswers, updateUnit, createUnit 
   } = useSarehData();
 
   const completedPct = useMemo(() => {
@@ -145,7 +145,10 @@ export const App: React.FC = () => {
                  units={units} 
                  answers={answers} 
                  onSaveAnswer={saveAnswer} 
-                 onSaveSession={saveSession} 
+                 onSaveSession={saveSession}
+                  isAdmin={role === 'admin'}
+                  onUpdateUnit={updateUnit}
+                  onCreateUnit={createUnit}
                />
              </div>
           )}
