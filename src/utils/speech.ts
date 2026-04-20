@@ -50,9 +50,9 @@ class SpeechService {
     // Browser lang codes can be 'pt-BR', 'pt_BR', 'pt'
     const langPrefix = lang.split(/[-_]/)[0].toLowerCase();
 
-    // Aggressive priority for Portuguese, looking for "Natural" or "Google" first
+    // Aggressive priority for Portuguese, looking for Male voices first as requested
     const priorities = langPrefix === 'pt'
-      ? ['Natural', 'Google português do Brasil', 'Microsoft Maria', 'Microsoft Heloisa', 'Daniela', 'Heloisa', 'Maria', 'Portuguese']
+      ? ['Natural', 'Microsoft Daniel', 'Daniel', 'Antonio', 'Google português do Brasil', 'Microsoft Maria', 'Microsoft Heloisa', 'Daniela', 'Heloisa', 'Maria', 'Portuguese']
       : ['Natural', 'Google US English', 'Samantha', 'Microsoft Zira', 'Aria', 'English'];
 
     // 1. Try finding by priority name AND lang prefix (prefer non-local voices if possible)
