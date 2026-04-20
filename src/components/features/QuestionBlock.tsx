@@ -25,6 +25,8 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
   const [showMediatorGuide, setShowMediatorGuide] = useState(false);
   const [tempAnswer, setTempAnswer] = useState(savedAnswer || '');
   const [isSaving, setIsSaving] = useState(false);
+  
+  const stripTtsTags = (text: string) => text.replace(/\[\/?(PT|EN)\]/gi, '');
   const [showSuccess, setShowSuccess] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   
@@ -387,7 +389,7 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
         ) : (
           <>
             <div className="q-text">
-              {question.q}
+              {stripTtsTags(question.q)}
               {(question.ttsEnabled !== false) && (
                 <button 
                   className="speech-mini-btn" 
@@ -468,7 +470,7 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
                         disabled={!onSaveAnswer}
                       >
                         <div className="opt-circle">{isSelected && <div className="inner" />}</div>
-                        <span>{opt}</span>
+                        <span>{stripTtsTags(opt)}</span>
                         {question.ttsOptionsEnabled && (
                           <button 
                             className="speech-opt-btn"
@@ -502,7 +504,7 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
                         disabled={!onSaveAnswer}
                       >
                         <div className="opt-square">{isSel && <Check size={12} />}</div>
-                        <span>{opt}</span>
+                        <span>{stripTtsTags(opt)}</span>
                         {question.ttsOptionsEnabled && (
                           <button 
                             className="speech-opt-btn"
