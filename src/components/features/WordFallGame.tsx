@@ -19,6 +19,13 @@ interface FallingWord {
   color: string;
 }
 
+interface FloatingText {
+  id: number;
+  text: string;
+  x: number;
+  y: number;
+}
+
 const WordFallGame: React.FC<WordFallGameProps> = ({ unitId, onGameOver, onBack }) => {
   const [wordBank, setWordBank] = useState<string[]>([]);
   const [activeWords, setActiveWords] = useState<FallingWord[]>([]);
@@ -27,6 +34,7 @@ const WordFallGame: React.FC<WordFallGameProps> = ({ unitId, onGameOver, onBack 
   const [lives, setLives] = useState(3);
   const [isPlaying, setIsPlaying] = useState(false);
   const [wordsFound, setWordsFound] = useState(0);
+  const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
   
   const { user } = useAuth();
   const { addStudentRewards } = useStudentJourney(user?.id || '');
@@ -127,6 +135,13 @@ const WordFallGame: React.FC<WordFallGameProps> = ({ unitId, onGameOver, onBack 
       const xpReward = matchingWord.text.length * 2;
       addStudentRewards(xpReward, 1);
       
+      // Floating Text
+      const ftId = Date.now();
+      setFloatingTexts(prev => [...prev, { id: ftId, text: `+${xpReward} XP`, x: matchingWord.x, y: matchingWord.y }]);
+      setTimeout(() => {
+        setFloatingTexts(prev => prev.filter(ft => ft.id !== ftId));
+      }, 1000);
+
       // Explosion!
       setActiveWords(prev => prev.filter(w => w.id !== matchingWord.id));
       setScore(s => s + matchingWord.text.length * 10);
@@ -204,6 +219,17 @@ const WordFallGame: React.FC<WordFallGameProps> = ({ unitId, onGameOver, onBack 
             }}
           >
             {word.text}
+          </div>
+        ))}
+
+        {/* Floating XP Labels */}
+        {floatingTexts.map(ft => (
+          <div 
+            key={ft.id}
+            className="floating-xp-label"
+            style={{ left: `${ft.x}%`, top: `${ft.y}px` }}
+          >
+            {ft.text}
           </div>
         ))}
       </div>
@@ -365,6 +391,23 @@ const WordFallGame: React.FC<WordFallGameProps> = ({ unitId, onGameOver, onBack 
         
         .zap-icon { color: #FFD93D; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        .floating-xp-label {
+          position: absolute;
+          font-weight: 900;
+          font-size: 24px;
+          color: #2ECC71;
+          text-shadow: 0 4px 0 rgba(255,255,255,0.8);
+          pointer-events: none;
+          z-index: 100;
+          animation: floatUp 1s ease-out forwards;
+          transform: translateX(-50%);
+        }
+
+        @keyframes floatUp {
+          0% { transform: translate(-50%, 0); opacity: 1; }
+          100% { transform: translate(-50%, -100px); opacity: 0; }
+        }
       `}</style>
     </div>
   );
