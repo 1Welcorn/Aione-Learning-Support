@@ -164,7 +164,7 @@ export const App: React.FC = () => {
                   <button className="back-btn" onClick={() => setActiveTab('home')}>←</button>
                   <h2 className="screen-title" style={{ margin: 0 }}>Planejamento</h2>
                </div>
-               <Planning units={units} isAdmin={role === 'admin'} settings={settings} onUpdateUnit={(id, field, val) => updateUnit(id, { [field]: val })} />
+               <Planning units={units} isAdmin={role === 'admin'} settings={settings} onUpdateUnit={(id, updates) => updateUnit(id, updates)} />
              </div>
           )}
            {activeTab === 'whatsapp' && (

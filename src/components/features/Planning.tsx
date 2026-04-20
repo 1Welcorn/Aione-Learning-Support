@@ -7,12 +7,12 @@ interface PlanningProps {
   units: Unit[];
   isAdmin: boolean;
   settings: any;
-  onUpdateUnit: (id: string, field: string, val: any) => void;
+  onUpdateUnit: (id: string, updates: Partial<Unit>) => void;
 }
 
 const AdminUnitResourceRow: React.FC<{ 
   unit: Unit, 
-  onSave: (id: string, field: string, val: any) => void 
+  onSave: (id: string, updates: Partial<Unit>) => void 
 }> = ({ unit, onSave }) => {
   const [embedText, setEmbedText] = useState(unit.embed_urls?.join('\n') || '');
   const [descText, setDescText] = useState(unit.descriptors?.join(', ') || '');
@@ -22,8 +22,10 @@ const AdminUnitResourceRow: React.FC<{
     const urls = embedText.split('\n').map(v => v.trim()).filter(Boolean);
     const descs = descText.split(',').map(v => v.trim()).filter(Boolean);
     
-    onSave(unit.id, 'embed_urls', urls);
-    onSave(unit.id, 'descriptors', descs);
+    onSave(unit.id, {
+      embed_urls: urls,
+      descriptors: descs
+    });
     
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
@@ -149,28 +151,28 @@ export const Planning: React.FC<PlanningProps> = ({ units, isAdmin, settings, on
               <tr key={unit.id}>
                 <td 
                   contentEditable={isAdmin}
-                  onBlur={(e) => onUpdateUnit(unit.id, 'plan_c', e.currentTarget.innerText)}
+                  onBlur={(e) => onUpdateUnit(unit.id, { plan_c: e.currentTarget.innerText })}
                   suppressContentEditableWarning
                 >
                   {unit.plan_c}
                 </td>
                 <td 
                   contentEditable={isAdmin}
-                  onBlur={(e) => onUpdateUnit(unit.id, 'plan_h', e.currentTarget.innerText)}
+                  onBlur={(e) => onUpdateUnit(unit.id, { plan_h: e.currentTarget.innerText })}
                   suppressContentEditableWarning
                 >
                   {unit.plan_h}
                 </td>
                 <td 
                   contentEditable={isAdmin}
-                  onBlur={(e) => onUpdateUnit(unit.id, 'plan_e', e.currentTarget.innerText)}
+                  onBlur={(e) => onUpdateUnit(unit.id, { plan_e: e.currentTarget.innerText })}
                   suppressContentEditableWarning
                 >
                   {unit.plan_e}
                 </td>
                 <td 
                   contentEditable={isAdmin}
-                  onBlur={(e) => onUpdateUnit(unit.id, 'plan_a', e.currentTarget.innerText)}
+                  onBlur={(e) => onUpdateUnit(unit.id, { plan_a: e.currentTarget.innerText })}
                   suppressContentEditableWarning
                 >
                   {unit.plan_a}
