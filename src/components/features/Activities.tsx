@@ -1,8 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import type { Unit, Question, QuestionType } from '../../types';
+import type { Unit, Question } from '../../types';
 import { COLORS } from '../../constants';
-import { ChevronDown, Info, CheckCircle, Volume2, FileText, Edit2, Trash2, X, Check, Plus } from 'lucide-react';
-import { speechService } from '../../utils/speech';
+import { ChevronDown, FileText, Edit2, Trash2, X, Check, Plus, CheckCircle } from 'lucide-react';
 import { QuestionBlock } from './QuestionBlock';
 
 // Local QuestionBlock implementation removed in favor of shared component
@@ -49,14 +48,14 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSave
 
   const deleteEmbed = (idx: number) => {
     if (window.confirm('Excluir este link interativo?')) {
-      const newUrls = [...unit.embed_urls];
-      newUrls.splice(idx, 1);
+    const newUrls = [...(unit.embed_urls || [])];
+    newUrls.splice(idx, 1);
       handleUpdateUnitContent({ embed_urls: newUrls });
     }
   };
 
   const saveEmbedEdit = (idx: number) => {
-    const newUrls = [...unit.embed_urls];
+    const newUrls = [...(unit.embed_urls || [])];
     newUrls[idx] = tempEmbedUrl;
     handleUpdateUnitContent({ embed_urls: newUrls });
     setEditingEmbedIdx(null);
@@ -191,13 +190,14 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSave
               <button 
                 className="admin-add-btn premium" 
                 onClick={() => {
-                  const newQs = [...unit.questions, { 
+                  const newQ: Question = { 
                     q: 'Nova Pergunta', 
                     type: 'mc', 
                     opts: ['Opção 1'],
                     mediator: 'Instrução para a mediadora...', 
                     hint: 'Dica para a aluna...' 
-                  }];
+                  };
+                  const newQs = [...unit.questions, newQ];
                   handleUpdateUnitContent({ questions: newQs });
                 }}
                 style={{ width: '100%', justifyContent: 'center', padding: '14px', borderStyle: 'dashed' }}

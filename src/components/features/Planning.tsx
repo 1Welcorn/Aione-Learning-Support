@@ -142,13 +142,14 @@ const AdminUnitResourceRow: React.FC<{
           )}
         </div>
         <button className="admin-add-btn premium" onClick={() => {
-          setQuestions([...questions, { 
+          const newQ: Question = { 
             q: 'Nova Pergunta', 
             type: 'mc', 
             opts: ['Opção 1'],
             mediator: 'Instrução para mediadora...', 
             hint: 'Dica para a aluna...' 
-          }]);
+          };
+          setQuestions([...questions, newQ]);
         }}>
           <Plus size={14} /> Adicionar Pergunta (Estilo Google Forms)
         </button>
