@@ -64,18 +64,36 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      {/* NEXT UP / HERO CARD */}
-      <div className="next-up-card" onClick={() => onNavigate('activities')}>
-        <div className="next-up-content">
-          <span className="next-up-tag">CONTINUAR ESTUDOS</span>
-          <h2 className="next-up-title">{nextUnit?.title || 'Inglês 2026'}</h2>
-          <p className="next-up-sub">{nextUnit?.sub || 'Explore novas palavras e expressões'}</p>
-          <button className="next-up-btn">
-            Começar Agora <ArrowRight size={18} style={{ marginLeft: '8px' }} />
-          </button>
-        </div>
-        <div className="hero-decoration">
-           <Sparkles size={80} opacity={0.1} />
+      {/* NEXT UP / HERO CARD V2 */}
+      <div className="next-up-card-v2" onClick={() => onNavigate('activities')}>
+        {/* Decorative Blur Element */}
+        <div className="next-up-blur-decor"></div>
+        
+        <div className="next-up-content-v2">
+          <div className="next-up-main-text">
+            <span className="next-up-badge">
+              Próximo Desafio 🏆
+            </span>
+            <h2 className="next-up-title-v2">{nextUnit?.title || 'Inglês 2026'}</h2>
+            <p className="next-up-quote">
+              "{nextUnit?.sub?.split('·')[0]?.trim() || 'Prepare-se para o próximo passo!'}"
+            </p>
+            
+            <button className="next-up-btn-v2">
+              PARTIU! 🚀
+            </button>
+          </div>
+
+          <div className="next-up-icon-wrapper">
+            <div className="next-up-emoji-v2">
+              {nextUnit?.title?.toLowerCase().includes('cozinha') ? '🍳' : 
+               nextUnit?.title?.toLowerCase().includes('escuta') ? '🎧' :
+               nextUnit?.title?.toLowerCase().includes('nome') ? '🙋‍♀️' :
+               nextUnit?.title?.toLowerCase().includes('redor') ? '🔍' :
+               nextUnit?.title?.toLowerCase().includes('celular') ? '📱' :
+               nextUnit?.title?.toLowerCase().includes('receita') ? '🍽️' : '🚀'}
+            </div>
+          </div>
         </div>
       </div>
 
