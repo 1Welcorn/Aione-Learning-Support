@@ -97,6 +97,10 @@ class SpeechService {
     }, 100);
   }
 
+  private stripTags(text: string) {
+    return text.replace(/\[\/?(PT|EN)\]/gi, '').trim();
+  }
+
   private parseChunks(text: string): { text: string; lang: 'pt-BR' | 'en-US' }[] {
     const regex = /\[(PT|EN)\](.*?)\[\/\1\]/gi;
     const chunks: { text: string; lang: 'pt-BR' | 'en-US' }[] = [];
@@ -104,7 +108,8 @@ class SpeechService {
     let match;
 
     while ((match = regex.exec(text)) !== null) {
-      const before = text.substring(lastIndex, match.index).trim();
+      // Add text before the tag (use auto-detect), stripping any lone tags
+      const before = this.stripTags(text.substring(lastIndex, match.index));
       if (before) {
         chunks.push({ text: before, lang: this.detectLanguage(before) });
       }
@@ -118,13 +123,17 @@ class SpeechService {
       lastIndex = regex.lastIndex;
     }
 
-    const after = text.substring(lastIndex).trim();
+    // Add remaining text, stripping any lone tags
+    const after = this.stripTags(text.substring(lastIndex));
     if (after) {
       chunks.push({ text: after, lang: this.detectLanguage(after) });
     }
 
     if (chunks.length === 0 && text) {
-      chunks.push({ text: text, lang: this.detectLanguage(text) });
+      const clean = this.stripTags(text);
+      if (clean) {
+        chunks.push({ text: clean, lang: this.detectLanguage(clean) });
+      }
     }
 
     return chunks;
@@ -151,12 +160,14 @@ class SpeechService {
     utterance.onstart = () => console.log(`Speaking (${current.lang}): ${current.text}`);
     
     utterance.onend = () => {
-      this.speakSequential(chunks.slice(1));
+      // Add a small pause (300ms) between chunks for more natural flow
+      setTimeout(() => {
+        this.speakSequential(chunks.slice(1));
+      }, 300);
     };
 
     utterance.onerror = (e) => {
       console.error(`Speech error (${current.lang}):`, e);
-      // Skip to next chunk if error
       this.speakSequential(chunks.slice(1));
     };
 
