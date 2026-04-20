@@ -44,6 +44,7 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
   const [editAudio, setEditAudio] = useState(question.audioUrl || '');
   const [editTtsEnabled, setEditTtsEnabled] = useState(question.ttsEnabled ?? true);
   const [editTtsOptionsEnabled, setEditTtsOptionsEnabled] = useState(question.ttsOptionsEnabled ?? false);
+  const [lastFocusedField, setLastFocusedField] = useState<{ field: string, index?: number, start: number, end: number } | null>(null);
   
   const currentColors = COLORS[color] || COLORS.teal;
   
@@ -159,6 +160,29 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
     }
   };
 
+  const insertTag = (type: 'PT' | 'EN') => {
+    if (!lastFocusedField) return;
+    
+    const { field, index, start, end } = lastFocusedField;
+    const startTag = `[${type}]`;
+    const endTag = `[/${type}]`;
+
+    if (field === 'title') {
+      const before = editQ.substring(0, start);
+      const selected = editQ.substring(start, end);
+      const after = editQ.substring(end);
+      setEditQ(before + startTag + selected + endTag + after);
+    } else if (field === 'option' && index !== undefined) {
+      const next = [...editOpts];
+      const val = next[index];
+      const before = val.substring(0, start);
+      const selected = val.substring(start, end);
+      const after = val.substring(end);
+      next[index] = before + startTag + selected + endTag + after;
+      setEditOpts(next);
+    }
+  };
+
   return (
     <div className={`q-block modern ${isDone ? 'is-done' : ''}`}>
       {isAdmin && (
@@ -204,6 +228,7 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
                 type="text" 
                 value={editQ} 
                 onChange={(e) => setEditQ(e.target.value)}
+                onBlur={(e) => setLastFocusedField({ field: 'title', start: e.target.selectionStart || 0, end: e.target.selectionEnd || 0 })}
                 placeholder="Título da pergunta"
                 className="admin-inline-input title"
               />
@@ -219,8 +244,13 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
                 <option value="scale">Escala linear</option>
               </select>
             </div>
-            <div style={{ fontSize: '10px', color: 'var(--ink4)', marginTop: '-12px', marginBottom: '16px', opacity: 0.8 }}>
-              Leitura Inteligente: Use <strong>[PT]texto[/PT]</strong> e <strong>[EN]text[/EN]</strong> para alternar vozes.
+            <div className="tag-helper-bar" style={{ display: 'flex', gap: '8px', marginBottom: '16px', alignItems: 'center' }}>
+              <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--ink4)', textTransform: 'uppercase' }}>Inserir Tags:</span>
+              <button className="admin-tag-btn" onClick={() => insertTag('PT')}>[PT] Português</button>
+              <button className="admin-tag-btn" onClick={() => insertTag('EN')}>[EN] Inglês</button>
+              <div style={{ fontSize: '10px', color: 'var(--ink4)', opacity: 0.7, marginLeft: 'auto' }}>
+                Selecione o texto e clique na tag.
+              </div>
             </div>
 
             <div className="editor-tts-controls" style={{ display: 'flex', gap: '20px', margin: '12px 0', padding: '10px', background: 'var(--bg2)', borderRadius: '8px' }}>
@@ -260,6 +290,7 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
                       type="text" 
                       value={opt} 
                       onChange={(e) => updateOption(i, e.target.value)}
+                      onBlur={(e) => setLastFocusedField({ field: 'option', index: i, start: e.target.selectionStart || 0, end: e.target.selectionEnd || 0 })}
                       className="admin-opt-input"
                     />
                     {editCorrect.includes(opt) && (
