@@ -198,12 +198,17 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSave
               <div className="brief-label">Atividades Interativas</div>
               <div className="embed-scroll-grid">
                 {unit.embed_urls.filter(u => u.trim()).map((url, idx) => (
-                  <div key={idx} className="iframe-responsive">
-                    <iframe 
-                      src={url} 
-                      title={`${unit.title} - Atividade ${idx + 1}`}
-                      allowFullScreen 
-                    />
+                  <div key={idx} className="embed-block">
+                    <div className="embed-label" style={{ color: currentColors.main }}>
+                      Interativa {idx + 1}
+                    </div>
+                    <div className="iframe-responsive">
+                      <iframe 
+                        src={url} 
+                        title={`${unit.title} - Atividade ${idx + 1}`}
+                        allowFullScreen 
+                      />
+                    </div>
                   </div>
                 ))}
               </div>

@@ -1838,6 +1838,26 @@ input,textarea,select{font-family:'DM Sans',sans-serif;font-size:16px}
 .embed-scroll-grid {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
   margin-top: 12px;
+}
+
+.embed-block {
+  background: var(--bg);
+  border-radius: 16px;
+  padding: 12px;
+  border: 1px solid var(--border);
+}
+
+.embed-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  display: inline-block;
+  background: #fff;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid currentColor;
 }
