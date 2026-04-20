@@ -50,16 +50,17 @@ class SpeechService {
     // Browser lang codes can be 'pt-BR', 'pt_BR', 'pt'
     const langPrefix = lang.split(/[-_]/)[0].toLowerCase();
 
+    // Aggressive priority for Portuguese, looking for "Natural" or "Google" first
     const priorities = langPrefix === 'pt'
-      ? ['Google português do Brasil', 'Microsoft Maria', 'Microsoft Heloisa', 'Daniela', 'Heloisa', 'Maria', 'Portuguese']
-      : ['Google US English', 'Samantha', 'Microsoft Zira', 'Aria', 'English'];
+      ? ['Natural', 'Google português do Brasil', 'Microsoft Maria', 'Microsoft Heloisa', 'Daniela', 'Heloisa', 'Maria', 'Portuguese']
+      : ['Natural', 'Google US English', 'Samantha', 'Microsoft Zira', 'Aria', 'English'];
 
-    // 1. Try finding by priority name AND lang prefix (prefer non-local voices if possible for Google)
+    // 1. Try finding by priority name AND lang prefix (prefer non-local voices if possible)
     for (const p of priorities) {
       const voice = this.voices.find(v => 
         v.lang.toLowerCase().startsWith(langPrefix) && 
         v.name.toLowerCase().includes(p.toLowerCase()) &&
-        (p.includes('Google') ? !v.localService : true)
+        !v.localService
       );
       if (voice) return voice;
     }
