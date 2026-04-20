@@ -24,6 +24,8 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSave
   const [editingEmbedIdx, setEditingEmbedIdx] = useState<number | null>(null);
   const [tempEmbedUrl, setTempEmbedUrl] = useState('');
   const [showBrief, setShowBrief] = useState(false);
+  const [isEditingBrief, setIsEditingBrief] = useState(false);
+  const [tempBrief, setTempBrief] = useState(unit.brief || '');
 
   const currentColors = COLORS[unit.color] || COLORS.teal;
 
@@ -124,8 +126,34 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSave
               
               {showBrief && (
                 <div className="mediator-brief">
-                  <div className="brief-label">Guia Geral da Mediadora</div>
-                  {unit.brief}
+                  <div className="brief-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    Guia Geral da Mediadora
+                    {isAdmin && !isEditingBrief && (
+                      <button className="admin-mini-btn" onClick={() => { setIsEditingBrief(true); setTempBrief(unit.brief || ''); }}>
+                        <Edit2 size={12} />
+                      </button>
+                    )}
+                  </div>
+                  {isEditingBrief ? (
+                    <div className="admin-inline-edit-box" style={{ marginTop: '8px' }}>
+                      <textarea 
+                        className="admin-inline-input" 
+                        style={{ minHeight: '80px', width: '100%', marginBottom: '8px' }}
+                        value={tempBrief}
+                        onChange={(e) => setTempBrief(e.target.value)}
+                      />
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button className="admin-save-small" onClick={() => { handleUpdateUnitContent({ brief: tempBrief }); setIsEditingBrief(false); }}>
+                          <Check size={14} /> Salvar
+                        </button>
+                        <button className="admin-cancel-small" onClick={() => setIsEditingBrief(false)}>
+                          <X size={14} /> Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    unit.brief
+                  )}
                 </div>
               )}
             </div>
