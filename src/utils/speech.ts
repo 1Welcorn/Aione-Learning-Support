@@ -51,10 +51,20 @@ class SpeechService {
     const langPrefix = lang.split(/[-_]/)[0].toLowerCase();
 
     const priorities = langPrefix === 'pt'
-      ? ['Google português do Brasil', 'Microsoft Maria', 'Microsoft Heloisa', 'Daniela', 'Portuguese']
+      ? ['Google português do Brasil', 'Microsoft Maria', 'Microsoft Heloisa', 'Daniela', 'Heloisa', 'Maria', 'Portuguese']
       : ['Google US English', 'Samantha', 'Microsoft Zira', 'Aria', 'English'];
 
-    // Try finding by priority name AND lang prefix
+    // 1. Try finding by priority name AND lang prefix (prefer non-local voices if possible for Google)
+    for (const p of priorities) {
+      const voice = this.voices.find(v => 
+        v.lang.toLowerCase().startsWith(langPrefix) && 
+        v.name.toLowerCase().includes(p.toLowerCase()) &&
+        (p.includes('Google') ? !v.localService : true)
+      );
+      if (voice) return voice;
+    }
+
+    // 2. Try priority name without localService check
     for (const p of priorities) {
       const voice = this.voices.find(v => 
         v.lang.toLowerCase().startsWith(langPrefix) && 
