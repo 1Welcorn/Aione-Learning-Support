@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import type { Unit } from '../../types';
-import type { Question } from '../../types';
+import type { Unit, Question } from '../../types';
+import { Printer, Save, CheckCircle, Trash2, Plus } from 'lucide-react';
+import { COLORS } from '../../constants';
 import { QuestionBlock } from './QuestionBlock';
 
 interface PlanningProps {
