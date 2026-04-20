@@ -157,6 +157,7 @@ export const App: React.FC = () => {
                  onSaveAnswer={saveAnswer} 
                  onSaveSession={saveSession}
                   isAdmin={role === 'admin'}
+                  isMediator={role === 'admin' || role === 'mediator'}
                   onUpdateUnit={updateUnit}
                   onCreateUnit={createUnit}
                />

@@ -12,10 +12,11 @@ interface UnitCardProps {
   onSaveAnswer: (qIdx: number, val: string) => Promise<boolean>;
   onSaveSession: (note: string) => Promise<boolean>;
   isAdmin?: boolean;
+  isMediator?: boolean;
   onUpdateUnit?: (id: string, updates: Partial<Unit>) => Promise<boolean>;
 }
 
-const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSaveSession, isAdmin, onUpdateUnit }) => {
+const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSaveSession, isAdmin, isMediator, onUpdateUnit }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [note, setNote] = useState('');
   const [isSavingSession, setIsSavingSession] = useState(false);
@@ -175,20 +176,34 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSave
                         </button>
                       </div>
                     )}
-                    <div className="embed-label" style={{ color: currentColors.main }}>
-                      {editingEmbedIdx === idx ? (
-                        <div className="admin-inline-edit-box">
+                    <div className="embed-label" style={{ color: currentColors.main, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {editingEmbedIdx === idx ? (
+                          <div className="admin-inline-edit-box">
+                            <input 
+                              type="text" 
+                              value={tempEmbedUrl} 
+                              onChange={(e) => setTempEmbedUrl(e.target.value)}
+                              className="admin-inline-input"
+                            />
+                            <button className="admin-save-small" onClick={() => saveEmbedEdit(idx)}><Check size={14} /></button>
+                            <button className="admin-cancel-small" onClick={() => setEditingEmbedIdx(null)}><X size={14} /></button>
+                          </div>
+                        ) : (
+                          `Interativa ${idx + 1}`
+                        )}
+                      </div>
+                      
+                      {isMediator && (
+                        <label className="embed-check-label" style={{ fontSize: '11px', color: 'var(--ink4)', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                          <span>Concluída?</span>
                           <input 
-                            type="text" 
-                            value={tempEmbedUrl} 
-                            onChange={(e) => setTempEmbedUrl(e.target.value)}
-                            className="admin-inline-input"
+                            type="checkbox" 
+                            checked={!!answers[`${unit.id}-${1000 + idx}`]?.is_done}
+                            onChange={(e) => onSaveAnswer(1000 + idx, e.target.checked ? 'COMPLETA' : '')}
+                            style={{ width: '16px', height: '16px', accentColor: currentColors.main }}
                           />
-                          <button className="admin-save-small" onClick={() => saveEmbedEdit(idx)}><Check size={14} /></button>
-                          <button className="admin-cancel-small" onClick={() => setEditingEmbedIdx(null)}><X size={14} /></button>
-                        </div>
-                      ) : (
-                        `Interativa ${idx + 1}`
+                        </label>
                       )}
                     </div>
                     <div className="iframe-responsive">
@@ -292,9 +307,10 @@ export const Activities: React.FC<{
   onSaveAnswer: (uId: string, qIdx: number, val: string) => Promise<boolean>; 
   onSaveSession: (uId: string, note: string) => Promise<boolean>;
   isAdmin?: boolean;
+  isMediator?: boolean;
   onUpdateUnit?: (uId: string, updates: Partial<Unit>) => Promise<boolean>;
   onCreateUnit?: (title: string) => Promise<boolean>;
-}> = ({ units, answers, onSaveAnswer, onSaveSession, isAdmin, onUpdateUnit, onCreateUnit }) => {
+}> = ({ units, answers, onSaveAnswer, onSaveSession, isAdmin, isMediator, onUpdateUnit, onCreateUnit }) => {
   
   const handleCreateUnit = async () => {
     const title = window.prompt('Qual o título da nova unidade?');
@@ -313,6 +329,7 @@ export const Activities: React.FC<{
           onSaveAnswer={(qIdx, val) => onSaveAnswer(unit.id, qIdx, val)}
           onSaveSession={(note) => onSaveSession(unit.id, note)}
           isAdmin={isAdmin}
+          isMediator={isMediator}
           onUpdateUnit={onUpdateUnit}
         />
       ))}
