@@ -35,6 +35,9 @@ export interface Unit {
   descriptors?: string[];
   questions: Question[];
   external_links?: ExternalLink[];
+  vocabulary_list?: string[];
+  learning_objectives?: string;
+  methodology?: string;
 }
 
 export interface Session {

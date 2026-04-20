@@ -17,6 +17,9 @@ const AdminUnitResourceRow: React.FC<{
   onSave: (id: string, updates: Partial<Unit>) => Promise<boolean>,
   onEditDetails: (id: string) => void
 }> = ({ unit, onSave, onEditDetails }) => {
+  const [embedUrls, setEmbedUrls] = useState<string[]>(unit.embed_urls || []);
+  const [questions, setQuestions] = useState<Question[]>(unit.questions || []);
+  const [descText, setDescText] = useState(unit.descriptors?.join(', ') || '');
   const [vocabulary, setVocabulary] = useState<string[]>(unit.vocabulary_list || []);
   const [newWord, setNewWord] = useState('');
   const [isSaved, setIsSaved] = useState(false);
@@ -32,7 +35,7 @@ const AdminUnitResourceRow: React.FC<{
 
   const handleSave = async () => {
     setIsSaving(true);
-    const descs = descText.split(',').map(v => v.trim()).filter(Boolean);
+    const descs = descText.split(',').map((v: string) => v.trim()).filter(Boolean);
     
     const success = await onSave(unit.id, {
       embed_urls: embedUrls,
@@ -50,13 +53,13 @@ const AdminUnitResourceRow: React.FC<{
 
   const removeQuestion = (idx: number) => {
     if (window.confirm('Excluir esta pergunta permanentemente?')) {
-      setQuestions(prev => prev.filter((_, i) => i !== idx));
+      setQuestions((prev: Question[]) => prev.filter((_, i) => i !== idx));
     }
   };
 
   const removeEmbed = (idx: number) => {
     if (window.confirm('Excluir este link interativo?')) {
-      setEmbedUrls(prev => prev.filter((_, i) => i !== idx));
+      setEmbedUrls((prev: string[]) => prev.filter((_, i) => i !== idx));
     }
   };
 
@@ -111,7 +114,7 @@ const AdminUnitResourceRow: React.FC<{
           {embedUrls.length === 0 ? (
             <div className="empty-mini">Nenhuma atividade interativa.</div>
           ) : (
-            embedUrls.map((url, i) => (
+            embedUrls.map((url: string, i: number) => (
               <div key={i} className="admin-item-row">
                 <div className="admin-item-text truncate">{url}</div>
                 <button className="admin-item-del" title="Excluir link" onClick={() => removeEmbed(i)}>
@@ -143,7 +146,7 @@ const AdminUnitResourceRow: React.FC<{
           {questions.length === 0 ? (
             <div className="empty-mini">Nenhuma pergunta cadastrada.</div>
           ) : (
-            questions.map((q, i) => (
+            questions.map((q: Question, i: number) => (
               <QuestionBlock 
                 key={i}
                 question={q}

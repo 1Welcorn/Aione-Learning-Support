@@ -28,7 +28,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const { stats, progress, loading: journeyLoading } = useStudentJourney(user?.id || '');
 
   // Dynamic values from Supabase stats
-  const currentXP = stats?.xp || 0;
   const currentLevel = stats?.level || 1;
   const currentStreak = stats?.streak || 0;
   const totalStars = stats?.stars || (sessionsCount * 10); // Fallback to calculation if profile not setup
@@ -37,8 +36,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const questionsDone = unit.questions?.filter((_, i) => answers[`${unit.id}-${i}`]?.is_done).length || 0;
     return questionsDone === (unit.questions?.length || 1);
   }).length;
-  
-  const completedPct = Math.round((completedUnits / (units.length || 1)) * 100);
 
   const handleSupportClick = () => {
     const text = `Olá Prof. ${mediatorName}, sou a Ione! Preciso de uma ajuda com as atividades de hoje.`;
