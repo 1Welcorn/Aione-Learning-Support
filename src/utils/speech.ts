@@ -51,7 +51,7 @@ class SpeechService {
     const langPrefix = lang.split(/[-_]/)[0].toLowerCase();
 
     const priorities = langPrefix === 'pt'
-      ? ['Google português do Brasil', 'Luciana', 'Maria', 'Daniela', 'Heloisa', 'Portuguese']
+      ? ['Google português do Brasil', 'Microsoft Maria', 'Microsoft Heloisa', 'Daniela', 'Portuguese']
       : ['Google US English', 'Samantha', 'Microsoft Zira', 'Aria', 'English'];
 
     // Try finding by priority name AND lang prefix
@@ -153,7 +153,7 @@ class SpeechService {
     const voice = this.getBestVoice(current.lang);
     if (voice) utterance.voice = voice;
     
-    utterance.rate = 0.8;
+    utterance.rate = 0.7; // Even slower for better comprehension
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
 
