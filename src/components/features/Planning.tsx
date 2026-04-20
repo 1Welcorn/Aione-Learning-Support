@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import type { Unit } from '../../types';
-import { Printer, Save, CheckCircle, Trash2, Plus } from 'lucide-react';
-import { COLORS } from '../../constants';
 import type { Question } from '../../types';
+import { QuestionBlock } from './QuestionBlock';
 
 interface PlanningProps {
   units: Unit[];
@@ -118,34 +117,39 @@ const AdminUnitResourceRow: React.FC<{
             </button>
           )}
         </div>
-        <div className="admin-items-list">
+        <div className="admin-items-list-modern">
           {questions.length === 0 ? (
             <div className="empty-mini">Nenhuma pergunta cadastrada.</div>
           ) : (
             questions.map((q, i) => (
-              <div key={i} className="admin-item-row">
-                <div className="admin-item-text">
-                  <span className="q-index-tag">{i + 1}</span> {q.q}
-                </div>
-                <button className="admin-item-del" title="Excluir pergunta" onClick={() => removeQuestion(i)}>
-                  <Trash2 size={16} />
-                </button>
-              </div>
+              <QuestionBlock 
+                key={i}
+                question={q}
+                index={i}
+                unitId={unit.id}
+                color={unit.color}
+                isAdmin={true}
+                onEdit={(newQ) => {
+                  const next = [...questions];
+                  next[i] = newQ;
+                  setQuestions(next);
+                }}
+                onDelete={() => removeQuestion(i)}
+                isNew={q.q === 'Nova Pergunta'}
+              />
             ))
           )}
         </div>
-        <button className="admin-add-btn" onClick={() => {
-          const qText = window.prompt('Digite a pergunta:');
-          if (qText) {
-            setQuestions([...questions, { 
-              q: qText, 
-              type: 'text', 
-              mediator: 'Instrução para mediadora...', 
-              hint: 'Dica para a aluna...' 
-            }]);
-          }
+        <button className="admin-add-btn premium" onClick={() => {
+          setQuestions([...questions, { 
+            q: 'Nova Pergunta', 
+            type: 'mc', 
+            opts: ['Opção 1'],
+            mediator: 'Instrução para mediadora...', 
+            hint: 'Dica para a aluna...' 
+          }]);
         }}>
-          <Plus size={14} /> Adicionar Pergunta (Texto)
+          <Plus size={14} /> Adicionar Pergunta (Estilo Google Forms)
         </button>
       </div>
 

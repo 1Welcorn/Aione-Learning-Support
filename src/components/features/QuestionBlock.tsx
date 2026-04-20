@@ -1,0 +1,310 @@
+import React, { useState } from 'react';
+import type { Question, QuestionType } from '../../types';
+import { COLORS } from '../../constants';
+import { Info, CheckCircle, Volume2, Edit2, Trash2, X, Check, Plus, Circle, CheckSquare } from 'lucide-react';
+import { speechService } from '../../utils/speech';
+
+interface QuestionBlockProps {
+  question: Question;
+  index: number;
+  unitId: string;
+  color: string;
+  isDone?: boolean;
+  savedAnswer?: string;
+  onSaveAnswer?: (val: string) => Promise<boolean>;
+  isAdmin?: boolean;
+  onEdit?: (newQ: Question) => void;
+  onDelete?: () => void;
+  isNew?: boolean;
+}
+
+export const QuestionBlock: React.FC<QuestionBlockProps> = ({ 
+  question, index, color, isDone, savedAnswer, onSaveAnswer, isAdmin, onEdit, onDelete, isNew 
+}) => {
+  const [showMediatorGuide, setShowMediatorGuide] = useState(false);
+  const [tempAnswer, setTempAnswer] = useState(savedAnswer || '');
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  
+  const [isEditing, setIsEditing] = useState(isNew || false);
+  const [editQ, setEditQ] = useState(question.q);
+  const [editType, setEditType] = useState<QuestionType>(question.type);
+  const [editOpts, setEditOpts] = useState<string[]>(question.opts || []);
+  const [editMediator, setEditMediator] = useState(question.mediator || '');
+  const [editHint, setEditHint] = useState(question.hint || '');
+  
+  const currentColors = COLORS[color] || COLORS.teal;
+
+  React.useEffect(() => {
+    if (savedAnswer !== undefined) setTempAnswer(savedAnswer);
+  }, [savedAnswer]);
+
+  const handleSave = async (val: string) => {
+    if (!onSaveAnswer || isSaving) return;
+    setIsSaving(true);
+    const success = await onSaveAnswer(val);
+    setIsSaving(false);
+    if (success) {
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } else {
+      window.alert('Erro ao salvar resposta.');
+    }
+  };
+
+  const handleConfirmEdit = () => {
+    if (onEdit) onEdit({ 
+      ...question, 
+      q: editQ, 
+      type: editType, 
+      opts: ['mc', 'checkbox'].includes(editType) ? editOpts : undefined,
+      mediator: editMediator,
+      hint: editHint
+    });
+    setIsEditing(false);
+  };
+
+  const toggleCheckbox = (opt: string) => {
+    let current = tempAnswer ? tempAnswer.split(', ') : [];
+    if (current.includes(opt)) {
+      current = current.filter(o => o !== opt);
+    } else {
+      current = [...current, opt];
+    }
+    const newVal = current.join(', ');
+    setTempAnswer(newVal);
+    handleSave(newVal);
+  };
+
+  const addOption = () => {
+    setEditOpts([...editOpts, `Opção ${editOpts.length + 1}`]);
+  };
+
+  const removeOption = (idx: number) => {
+    setEditOpts(editOpts.filter((_, i) => i !== idx));
+  };
+
+  const updateOption = (idx: number, val: string) => {
+    const next = [...editOpts];
+    next[idx] = val;
+    setEditOpts(next);
+  };
+
+  return (
+    <div className={`q-block modern ${isDone ? 'is-done' : ''}`}>
+      {isAdmin && (
+        <div className="admin-inline-actions">
+          <button className="admin-mini-btn" onClick={() => setIsEditing(!isEditing)} title="Editar Questão">
+            <Edit2 size={14} />
+          </button>
+          <button className="admin-mini-btn del" onClick={onDelete} title="Excluir Questão">
+            <Trash2 size={14} />
+          </button>
+        </div>
+      )}
+
+      <div className="q-header">
+         <div className="q-num-pill" style={{ background: currentColors.main }}>{index + 1}</div>
+         <div className="q-type-badge">{
+           question.type === 'mc' ? 'Múltipla Escolha' :
+           question.type === 'checkbox' ? 'Caixas de Seleção' :
+           question.type === 'scale' ? 'Escala' :
+           question.type === 'paragraph' ? 'Parágrafo' : 'Resposta Curta'
+         }</div>
+      </div>
+      
+      <div className="q-content-area">
+        {isEditing ? (
+          <div className="admin-modern-editor">
+            <div className="editor-row">
+              <input 
+                type="text" 
+                value={editQ} 
+                onChange={(e) => setEditQ(e.target.value)}
+                placeholder="Título da pergunta"
+                className="admin-inline-input title"
+              />
+              <select 
+                value={editType} 
+                onChange={(e) => setEditType(e.target.value as QuestionType)}
+                className="admin-type-select"
+              >
+                <option value="text">Resposta curta</option>
+                <option value="paragraph">Parágrafo</option>
+                <option value="mc">Múltipla escolha</option>
+                <option value="checkbox">Caixas de seleção</option>
+                <option value="scale">Escala linear</option>
+              </select>
+            </div>
+
+            {['mc', 'checkbox'].includes(editType) && (
+              <div className="admin-options-editor">
+                {editOpts.map((opt, i) => (
+                  <div key={i} className="admin-opt-row">
+                    {editType === 'mc' ? <Circle size={14} /> : <CheckSquare size={14} />}
+                    <input 
+                      type="text" 
+                      value={opt} 
+                      onChange={(e) => updateOption(i, e.target.value)}
+                      className="admin-opt-input"
+                    />
+                    <button onClick={() => removeOption(i)} className="admin-opt-del"><X size={12} /></button>
+                  </div>
+                ))}
+                <button className="admin-add-opt-btn" onClick={addOption}>
+                  <Plus size={14} /> Adicionar opção
+                </button>
+              </div>
+            )}
+
+            <div className="editor-row" style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="admin-form-group">
+                <label style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--ink4)' }}>Guia da Mediadora</label>
+                <textarea 
+                   className="admin-input-full"
+                   style={{ minHeight: '60px', fontSize: '12px' }}
+                   value={editMediator}
+                   onChange={(e) => setEditMediator(e.target.value)}
+                   placeholder="Instruções para quem aplica..."
+                />
+              </div>
+              <div className="admin-form-group">
+                <label style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--ink4)' }}>Dica para a Aluna</label>
+                <textarea 
+                   className="admin-input-full"
+                   style={{ minHeight: '60px', fontSize: '12px' }}
+                   value={editHint}
+                   onChange={(e) => setEditHint(e.target.value)}
+                   placeholder="Pequena ajuda se ela travar..."
+                />
+              </div>
+            </div>
+
+            <div className="editor-footer" style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
+              <button className="admin-save-btn" onClick={handleConfirmEdit} style={{ background: currentColors.main, color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '700' }}>
+                <Check size={16} /> Aplicar Mudanças
+              </button>
+              <button className="admin-cancel-btn" onClick={() => setIsEditing(false)} style={{ background: 'var(--bg)', border: '1px solid var(--border)', padding: '10px 20px', borderRadius: '8px' }}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="q-text">
+              {question.q}
+              {!/\b(o|a|os|as|um|uma|que|é|significa|mostra|o que|qual|como|onde|quem)\b/i.test(question.q) && (
+                <button 
+                  className="speech-mini-btn" 
+                  onClick={() => speechService.speak(question.q)}
+                >
+                  <Volume2 size={16} />
+                </button>
+              )}
+            </div>
+
+            <div className="q-input-container">
+              {question.type === 'text' && (
+                <input 
+                  type="text"
+                  className="modern-text-input"
+                  placeholder="Sua resposta..."
+                  value={tempAnswer}
+                  onChange={(e) => setTempAnswer(e.target.value)}
+                  onBlur={(e) => handleSave(e.target.value)}
+                  disabled={!onSaveAnswer}
+                />
+              )}
+
+              {question.type === 'paragraph' && (
+                <textarea 
+                  className="modern-text-input paragraph"
+                  placeholder="Sua resposta longa..."
+                  value={tempAnswer}
+                  onChange={(e) => setTempAnswer(e.target.value)}
+                  onBlur={(e) => handleSave(e.target.value)}
+                  disabled={!onSaveAnswer}
+                />
+              )}
+
+              {question.type === 'mc' && (
+                <div className="modern-options-grid">
+                  {question.opts?.map((opt, i) => (
+                    <button 
+                      key={i}
+                      className={`modern-opt-btn ${tempAnswer === opt ? 'selected' : ''}`}
+                      onClick={() => { setTempAnswer(opt); handleSave(opt); }}
+                      style={{ '--brand': currentColors.main } as any}
+                      disabled={!onSaveAnswer}
+                    >
+                      <div className="opt-circle">{tempAnswer === opt && <div className="inner" />}</div>
+                      <span>{opt}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {question.type === 'checkbox' && (
+                <div className="modern-options-grid">
+                  {question.opts?.map((opt, i) => {
+                    const isSel = tempAnswer.split(', ').includes(opt);
+                    return (
+                      <button 
+                        key={i}
+                        className={`modern-opt-btn ${isSel ? 'selected' : ''}`}
+                        onClick={() => toggleCheckbox(opt)}
+                        style={{ '--brand': currentColors.main } as any}
+                        disabled={!onSaveAnswer}
+                      >
+                        <div className="opt-square">{isSel && <Check size={12} />}</div>
+                        <span>{opt}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {question.type === 'scale' && (
+                <div className="modern-scale-container">
+                  {[1,2,3,4,5].map(num => (
+                    <button 
+                      key={num}
+                      className={`scale-dot ${tempAnswer === String(num) ? 'selected' : ''}`}
+                      onClick={() => { setTempAnswer(String(num)); handleSave(String(num)); }}
+                      style={{ '--brand': currentColors.main } as any}
+                      disabled={!onSaveAnswer}
+                    >
+                      {num}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      {!isEditing && (
+        <div className="q-footer">
+          <button 
+            className={`mediator-hint-btn ${showMediatorGuide ? 'active' : ''}`}
+            onClick={() => setShowMediatorGuide(!showMediatorGuide)}
+          >
+            <Info size={16} /> {showMediatorGuide ? 'Ocultar Guia' : 'Guia da Mediadora'}
+          </button>
+          
+          {showSuccess && <div className="save-badge"><CheckCircle size={14} /> Salvo!</div>}
+        </div>
+      )}
+
+      {!isEditing && showMediatorGuide && (
+        <div className="mediator-panel" style={{ borderLeftColor: currentColors.main }}>
+          <div className="mediator-label">Sugestão de Mediação:</div>
+          <p>{question.mediator || 'Incentive a aluna a tentar sozinha primeiro.'}</p>
+          <div className="mediator-label">Dica para a Aluna:</div>
+          <p className="student-hint">{question.hint || 'Pense na última aula...'}</p>
+        </div>
+      )}
+    </div>
+  );
+};

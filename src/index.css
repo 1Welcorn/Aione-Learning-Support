@@ -1347,6 +1347,13 @@ input,textarea,select{font-family:'DM Sans',sans-serif;font-size:16px}
   margin-bottom: 12px;
 }
 
+.admin-items-list-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
 .admin-item-row {
   display: flex;
   align-items: center;
