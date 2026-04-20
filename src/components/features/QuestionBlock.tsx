@@ -496,7 +496,11 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
                       <button 
                         key={i}
                         className={`modern-opt-btn ${isSelected ? 'selected' : ''} ${isSelected && isCorrect ? 'reveal-correct' : ''} ${isSelected && !isCorrect ? 'reveal-wrong' : ''}`}
-                        onClick={() => { setTempAnswer(opt); handleSave(opt); }}
+                        onClick={() => { 
+                          setTempAnswer(opt); 
+                          handleSave(opt); 
+                          if (question.ttsOptionsEnabled) speechService.speak(opt);
+                        }}
                         style={{ '--brand': currentColors.main } as any}
                         disabled={!onSaveAnswer}
                       >
@@ -534,7 +538,10 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
                       <button 
                         key={i}
                         className={`modern-opt-btn ${isSel ? 'selected' : ''} ${isSel && isCorrect ? 'reveal-correct' : ''} ${isSel && !isCorrect ? 'reveal-wrong' : ''}`}
-                        onClick={() => toggleCheckbox(opt)}
+                        onClick={() => {
+                          toggleCheckbox(opt);
+                          if (question.ttsOptionsEnabled) speechService.speak(opt);
+                        }}
                         style={{ '--brand': currentColors.main } as any}
                         disabled={!onSaveAnswer}
                       >
