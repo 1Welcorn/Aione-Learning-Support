@@ -117,7 +117,7 @@ const UnitCard: React.FC<UnitCardProps> = ({ unit, answers, onSaveAnswer, onSave
             </div>
             <span className="unit-progress-pill-v2">
               {questionsDone}/{unit.questions.length}
-            </div>
+            </span>
           </div>
 
           <div className="unit-info-body">
