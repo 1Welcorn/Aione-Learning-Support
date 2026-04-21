@@ -194,6 +194,7 @@ const StepNavigation: React.FC<{
   );
 };
 
+interface UnitCardProps {
   unit: Unit;
   answers: Record<string, any>;
   onSaveAnswer: (qIdx: number, val: string) => Promise<boolean>;
