@@ -273,6 +273,23 @@ export const UnitCard: React.FC<UnitCardProps> = ({
               </div>
             </div>
           )}
+          {isAdmin && (
+            <div style={{ padding: '0 20px 20px' }}>
+              <button 
+                className="admin-add-btn" 
+                onClick={() => {
+                  const url = window.prompt('Cole o link de incorporação (Canva, HTML, etc):');
+                  if (url) {
+                    const newUrls = [...(unit.embed_urls || []), url];
+                    handleUpdateUnitContent({ embed_urls: newUrls });
+                  }
+                }}
+                style={{ width: '100%', fontSize: '12px', padding: '12px', borderStyle: 'dashed' }}
+              >
+                <Plus size={16} /> Adicionar Atividade Interativa (Canva/HTML/Jogos)
+              </button>
+            </div>
+          )}
 
 
 
