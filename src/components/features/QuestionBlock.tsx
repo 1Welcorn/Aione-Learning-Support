@@ -333,9 +333,5 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
         </div>
       )}
     </div>
-  )}
-        </div>
-      )}
-    </div>
   );
 };
