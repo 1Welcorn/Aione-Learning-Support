@@ -406,31 +406,31 @@
   .trail-grid-v4 {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    gap: 20px;
+    gap: 24px;
     width: 100%;
-    max-width: 1400px;
+    max-width: 1800px;
   }
 
   .trail-card-v4 {
     background: #fff;
-    border: 1.5px solid #f1f5f9;
-    border-radius: 28px;
-    padding: 24px 16px;
+    border: 2px solid #f1f5f9;
+    border-radius: 40px;
+    padding: 48px 24px;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 16px;
+    gap: 24px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
   }
 
   .trail-card-v4:hover {
-    transform: translateY(-8px) scale(1.02);
+    transform: translateY(-12px) scale(1.03);
     border-color: var(--unit-color);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.08);
   }
 
   .trail-card-v4.is-locked {
@@ -440,32 +440,32 @@
   }
 
   .trail-card-icon-v4 {
-    width: 72px;
-    height: 72px;
-    border-radius: 22px;
+    width: 96px;
+    height: 96px;
+    border-radius: 28px;
     background: var(--unit-color);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.12);
   }
 
   .trail-card-info-v4 .unit-idx-v4 {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 800;
     color: var(--ink4);
     display: block;
-    margin-bottom: 6px;
-    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+    letter-spacing: 0.08em;
   }
 
   .trail-card-info-v4 .unit-title-v4 {
-    font-size: 18px;
+    font-size: 22px;
     font-weight: 800;
     margin: 0;
     color: var(--ink1);
-    line-height: 1.3;
+    line-height: 1.2;
   }
 
   .unit-done-tag {
