@@ -64,14 +64,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <span>{currentStreak} Dias</span>
           </div>
         </div>
-
-        <div className="dash-mission-mini" onClick={() => onNavigate('activities', nextUnit?.unit_id)}>
-          <div className="mission-content-mini">
-            <span className="mission-tag-mini">MISSÃO ATUAL</span>
-            <span className="mission-title-mini">{nextUnit?.unit_title || 'Unidade 1'}</span>
-          </div>
-          <button className="mission-btn-mini"><Play size={16} fill="currentColor" /></button>
-        </div>
       </div>
 
       {/* CENTER: ADVENTURE TRAIL GRID */}
