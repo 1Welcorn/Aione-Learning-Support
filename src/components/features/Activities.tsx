@@ -66,12 +66,19 @@ const StepNavigation: React.FC<{
   const [sessionSuccess, setSessionSuccess] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
   const [hintPos, setHintPos] = useState<{ top: number; left: number } | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     if (!isFirstUnit || !btnRef.current) return;
     const rect = btnRef.current.getBoundingClientRect();
     setHintPos({ top: rect.top + rect.height / 2 - 16, left: rect.right + 8 });
   }, [isFirstUnit, activeStep]);
+
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
+  }, []);
 
   // Group all content into steps
   const embeds = (unit.embed_urls || []).filter(u => u.trim());
@@ -208,7 +215,16 @@ const StepNavigation: React.FC<{
                 </div>
               )}
             </div>
-            <div className="iframe-responsive-v4" id={`embed-container-${(current as EmbedStep).idx}`}>
+            <div className="iframe-responsive-v4" id={`embed-container-${(current as EmbedStep).idx}`} style={{ position: 'relative' }}>
+              {isFullscreen && (
+                <button
+                  className="exit-fullscreen-btn"
+                  onClick={() => document.exitFullscreen()}
+                  title="Sair da Tela Cheia"
+                >
+                  ✕ Sair
+                </button>
+              )}
               <iframe src={(current as EmbedStep).url} allowFullScreen />
             </div>
           </div>

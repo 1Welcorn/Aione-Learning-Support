@@ -54,6 +54,15 @@ const WordFallGame: React.FC<WordFallGameProps> = ({ unitId, onGameOver, onBack 
     loadWords();
   }, [unitId]);
 
+  // Auto-start once word bank is ready
+  useEffect(() => {
+    if (wordBank.length > 0 && !isPlaying && lives > 0) {
+      const timer = setTimeout(() => startGame(), 800);
+      return () => clearTimeout(timer);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wordBank]);
+
   const spawnWord = () => {
     if (wordBank.length === 0) return;
     
@@ -185,13 +194,13 @@ const WordFallGame: React.FC<WordFallGameProps> = ({ unitId, onGameOver, onBack 
 
       {/* GAME AREA */}
       <div className="game-canvas">
+
         {!isPlaying && lives > 0 && (
           <div className="game-overlay">
             <div className="start-card">
                <Zap size={64} className="zap-icon" />
                <h2>WORD FALL</h2>
                <p>Digite as palavras antes que elas caiam!</p>
-               <button onClick={startGame} className="start-btn">COMEÇAR JOGO!</button>
             </div>
           </div>
         )}
