@@ -1,4 +1,4 @@
-import { Star, CheckCircle2, Trophy, Sparkles, MessageCircle, Flame, Play } from 'lucide-react';
+import { Star, CheckCircle2, Trophy, Sparkles, MessageCircle, Flame } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useStudentJourney } from '../../hooks/useStudentJourney';
 import { useDashboardData } from '../../hooks/useDashboardData';
@@ -35,7 +35,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  const nextUnit = units.find(u => u.unit_status !== 'completed') || units[0];
 
   if (journeyLoading || statsLoading) return <div className="screen-loading">Carregando sua jornada...</div>;
 
