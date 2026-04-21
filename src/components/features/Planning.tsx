@@ -79,7 +79,7 @@ const AdminUnitResourceRow: React.FC<{
     <div className="admin-unit-card">
       <div className="admin-unit-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div className="unit-dot" style={{ background: COLORS[unit.color]?.main || 'var(--teal)' }}></div>
+          <div className="unit-dot" style={{ background: COLORS[unit.color]?.main || COLORS.emerald?.main || '#10b981' }}></div>
           <strong>{unit.title}</strong>
         </div>
         <button 

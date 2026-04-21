@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
-import { Save, Plus, Trash2, BookOpen, Target, Lightbulb, ChevronLeft, Eye, X } from 'lucide-react';
+import { Save, Plus, Trash2, BookOpen, Target, Lightbulb, ChevronLeft, Eye, X, Globe, Link } from 'lucide-react';
 import { UnitCard } from './Activities';
+import { COLORS } from '../../constants';
 
 interface PlanningEditorProps {
   unitId: string;
@@ -42,7 +43,41 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
     setNewWord("");
   };
 
+  const addEmbed = () => {
+    if (!tempEmbed.trim()) return;
+    const current = Array.isArray(unitData.embed_urls) ? unitData.embed_urls : [];
+    setUnitData({ ...unitData, embed_urls: [...current, tempEmbed.trim()] });
+    setTempEmbed("");
+  };
+
+  const removeEmbed = (idx: number) => {
+    const current = [...(unitData.embed_urls || [])];
+    current.splice(idx, 1);
+    setUnitData({ ...unitData, embed_urls: current });
+  };
+
+  const addExternalLink = () => {
+    const current = Array.isArray(unitData.external_links) ? unitData.external_links : [];
+    setUnitData({ 
+      ...unitData, 
+      external_links: [...current, { label: "Novo Link", url: "https://" }] 
+    });
+  };
+
+  const updateExternalLink = (idx: number, field: string, val: string) => {
+    const next = [...(unitData.external_links || [])];
+    next[idx] = { ...next[idx], [field]: val };
+    setUnitData({ ...unitData, external_links: next });
+  };
+
+  const removeExternalLink = (idx: number) => {
+    const next = [...(unitData.external_links || [])];
+    next.splice(idx, 1);
+    setUnitData({ ...unitData, external_links: next });
+  };
+
   if (loading) return (
+
     <div className="screen-loading">
       <div className="loader-spinner"></div>
       <p>Carregando plano...</p>
@@ -99,10 +134,122 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
               placeholder="Ex: Uso de flashcards e objetos reais..."
             />
           </section>
+          <section className="editor-section-card">
+            <h3 className="section-title-v4">
+              <Globe className="text-teal" size={20} /> Atividades Interativas (Embed)
+            </h3>
+            <p className="field-help">Cole aqui links do Wordwall, Canva ou Apps em HTML para que apareçam dentro da aula.</p>
+            <div className="embed-input-group">
+              <input 
+                type="text" 
+                className="editor-input-v4"
+                placeholder="Cole o link da atividade aqui..."
+                value={tempEmbed}
+                onChange={(e) => setTempEmbed(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addEmbed()}
+              />
+              <button onClick={addEmbed} className="embed-add-btn-v4">
+                <Plus size={20} /> Adicionar
+              </button>
+            </div>
+            <div className="embed-list-v4">
+              {(!unitData.embed_urls || unitData.embed_urls.length === 0) && (
+                <div className="empty-mini">Nenhuma atividade interativa adicionada.</div>
+              )}
+              {unitData.embed_urls?.map((url: string, i: number) => (
+                <div key={i} className="embed-item-v4">
+                  <Globe size={14} className="text-teal" />
+                  <span className="embed-url-text">{url}</span>
+                  <button className="embed-remove-btn" onClick={() => removeEmbed(i)}>
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="editor-section-card">
+            <h3 className="section-title-v4">
+              <Eye className="text-purple" size={20} /> Identidade Visual Pedagógica
+            </h3>
+            <p className="field-help">Selecione o tema visual com base no público-alvo da lição.</p>
+            
+            <div className="theme-grid-v4">
+              {[
+                { id: 'gamer', label: 'Turbo Gamer', target: 'High School / Adolescentes', desc: 'Estética moderna e digital' },
+                { id: 'creative', label: 'Energia Criativa', target: 'Middle School / Versátil', desc: 'Equilíbrio e foco organizacional' },
+                { id: 'pop', label: 'Pop Art', target: '6º e 7º anos / Crianças', desc: 'Cores saturadas e lúdicas' }
+              ].map(theme => (
+                <button
+                  key={theme.id}
+                  className={`theme-card-v4 ${unitData.color === theme.id ? 'active' : ''}`}
+                  onClick={() => setUnitData({ ...unitData, color: theme.id })}
+                >
+                  <div className="theme-swatch-v4" style={{ 
+                    background: `linear-gradient(135deg, ${COLORS[theme.id].main} 0%, ${COLORS[theme.id].dark} 100%)`,
+                    borderBottom: `4px solid ${COLORS[theme.id].accent}`
+                  }}>
+                    <div className="accent-dot-v4" style={{ background: COLORS[theme.id].accent }}></div>
+                  </div>
+                  <div className="theme-info-v4">
+                    <span className="theme-label-v4">{theme.label}</span>
+                    <span className="theme-target-v4">{theme.target}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="color-selector-mini-v4">
+              <p className="field-help">Ou selecione uma cor clássica:</p>
+              <div className="mini-circles-row">
+                {['emerald', 'sapphire', 'terracotta', 'amethyst', 'crimson'].map(key => (
+                  <button
+                    key={key}
+                    className={`mini-color-btn ${unitData.color === key ? 'active' : ''}`}
+                    style={{ background: COLORS[key].main }}
+                    onClick={() => setUnitData({ ...unitData, color: key })}
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
         </div>
 
         {/* Vocabulary Manager Section */}
         <div className="editor-side-col">
+          <section className="editor-section-card">
+            <h3 className="section-title-v4">
+              <Link className="text-orange" size={20} /> Links para Materiais (Canva/Docs)
+            </h3>
+            <p className="field-help">Adicione links externos para materiais de apoio ou scripts.</p>
+            <div className="link-list-v4">
+              {unitData.external_links?.map((link: any, i: number) => (
+                <div key={i} className="link-editor-item-v4">
+                  <input 
+                    type="text" 
+                    className="link-label-input"
+                    value={link.label}
+                    onChange={(e) => updateExternalLink(i, 'label', e.target.value)}
+                    placeholder="Nome do Material"
+                  />
+                  <input 
+                    type="text" 
+                    className="link-url-input"
+                    value={link.url}
+                    onChange={(e) => updateExternalLink(i, 'url', e.target.value)}
+                    placeholder="https://..."
+                  />
+                  <button className="embed-remove-btn" onClick={() => removeExternalLink(i)}>
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+              <button className="add-link-btn-v4" onClick={addExternalLink}>
+                <Plus size={16} /> Novo Link
+              </button>
+            </div>
+          </section>
+
           <section className="editor-section-card">
             <h3 className="section-title-v4">
               <BookOpen className="text-emerald" size={20} /> Banco de Palavras (Word Fall)
@@ -314,7 +461,7 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
         .preview-modal {
           background: #f8fafc;
           width: 100%;
-          max-width: 1000px;
+          max-width: 1400px;
           max-height: 90vh;
           border-radius: 32px;
           overflow: hidden;
@@ -341,6 +488,8 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
           padding: 32px;
           background: #FDFBF7;
           min-height: 100vh;
+          max-width: 1400px;
+          margin: 0 auto;
         }
         .editor-header {
           display: flex;
@@ -604,6 +753,242 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
           color: #94a3b8;
           margin-bottom: 12px;
           font-weight: 500;
+        }
+
+        .theme-grid-v4 {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+          gap: 16px;
+          margin-bottom: 24px;
+        }
+
+        .theme-card-v4 {
+          background: white;
+          border: 2px solid #e2e8f0;
+          border-radius: 20px;
+          padding: 8px;
+          cursor: pointer;
+          transition: all 0.2s;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          text-align: left;
+        }
+
+        .theme-card-v4:hover {
+          border-color: #cbd5e1;
+          transform: translateY(-2px);
+        }
+
+        .theme-card-v4.active {
+          border-color: #0d9488;
+          background: #f0fdfa;
+          box-shadow: 0 10px 20px rgba(13, 148, 136, 0.1);
+        }
+
+        .theme-swatch-v4 {
+          height: 60px;
+          border-radius: 14px;
+          position: relative;
+          overflow: hidden;
+          display: flex;
+          align-items: flex-end;
+          padding: 8px;
+        }
+
+        .accent-dot-v4 {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          border: 2px solid white;
+        }
+
+        .theme-info-v4 {
+          padding: 4px;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .theme-label-v4 {
+          font-weight: 800;
+          font-size: 13px;
+          color: #1e293b;
+        }
+
+        .theme-target-v4 {
+          font-size: 10px;
+          color: #64748b;
+          font-weight: 600;
+        }
+
+        .color-selector-mini-v4 {
+          padding-top: 16px;
+          border-top: 1px dashed #e2e8f0;
+        }
+
+        .mini-circles-row {
+          display: flex;
+          gap: 10px;
+          margin-top: 8px;
+        }
+
+        .mini-color-btn {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          border: 2px solid white;
+          box-shadow: 0 0 0 1px #e2e8f0;
+          cursor: pointer;
+          transition: transform 0.2s;
+        }
+
+        .mini-color-btn:hover {
+          transform: scale(1.2);
+        }
+
+        .mini-color-btn.active {
+          box-shadow: 0 0 0 2px #0d9488;
+        }
+
+        .embed-input-group {
+          display: flex;
+          gap: 12px;
+          margin-bottom: 16px;
+        }
+
+        .editor-input-v4 {
+          flex: 1;
+          background: #f8fafc;
+          border: 2px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 12px 16px;
+          font-size: 14px;
+          color: #1e293b;
+          outline: none;
+          transition: all 0.2s;
+        }
+
+        .editor-input-v4:focus {
+          border-color: #0d9488;
+          background: white;
+        }
+
+        .embed-add-btn-v4 {
+          padding: 0 20px;
+          background: #0d9488;
+          color: white;
+          border: none;
+          border-radius: 14px;
+          font-weight: 700;
+          font-size: 14px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+        }
+
+        .embed-list-v4 {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .embed-item-v4 {
+          background: #f8fafc;
+          padding: 12px 16px;
+          border-radius: 16px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          border: 1px solid #e2e8f0;
+          transition: all 0.2s;
+        }
+
+        .embed-item-v4:hover {
+          border-color: #cbd5e1;
+        }
+
+        .embed-url-text {
+          font-size: 13px;
+          color: #64748b;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          flex: 1;
+          font-family: monospace;
+        }
+
+        .embed-remove-btn {
+          background: #fee2e2;
+          border: none;
+          color: #ef4444;
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .embed-remove-btn:hover {
+          background: #ef4444;
+          color: white;
+        }
+        .link-list-v4 {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .link-editor-item-v4 {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+
+        .link-label-input {
+          width: 120px;
+          background: #f1f5f9;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          padding: 8px;
+          font-size: 12px;
+          font-weight: 700;
+          color: #1e293b;
+        }
+
+        .link-url-input {
+          flex: 1;
+          background: #f1f5f9;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          padding: 8px;
+          font-size: 12px;
+          color: #64748b;
+        }
+
+        .add-link-btn-v4 {
+          background: white;
+          border: 1.5px dashed #cbd5e1;
+          color: #64748b;
+          padding: 10px;
+          border-radius: 10px;
+          font-size: 12px;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .add-link-btn-v4:hover {
+          border-color: #f97316;
+          color: #f97316;
+          background: #fff7ed;
         }
       `}</style>
     </div>

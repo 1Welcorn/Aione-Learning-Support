@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import type { Question, QuestionType } from '../../types';
 import { COLORS } from '../../constants';
-import { Info, CheckCircle, Volume2, Edit2, Trash2, X, Check, Plus, Circle, CheckSquare, Image as ImageIcon, Music, Loader2 } from 'lucide-react';
+import { Info, CheckCircle, Volume2, Edit2, Trash2, Check, Circle, Music } from 'lucide-react';
 import { speechService } from '../../utils/speech';
-import { supabase } from '../../services/supabase';
+// import { supabase } from '../../services/supabase';
 
 interface QuestionBlockProps {
   question: Question;
@@ -28,65 +28,31 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
   
   const stripTtsTags = (text: string) => text.replace(/\[\/?(PT|EN)\]/gi, '');
   const [showSuccess, setShowSuccess] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  // const [isUploading, setIsUploading] = useState(false);
   
   const [isEditing, setIsEditing] = useState(isNew || false);
   const [editQ, setEditQ] = useState(question.q);
-  const [editType, setEditType] = useState<QuestionType>(question.type);
-  const [editOpts, setEditOpts] = useState<string[]>(question.opts || []);
-  const [editMediator, setEditMediator] = useState(question.mediator || '');
-  const [editHint, setEditHint] = useState(question.hint || '');
-  const [editCorrect, setEditCorrect] = useState<string[]>(
+  const [editType, _setEditType] = useState<QuestionType>(question.type);
+  const [editOpts, _setEditOpts] = useState<string[]>(question.opts || []);
+  const [_editMediator, _setEditMediator] = useState(question.mediator || '');
+  const [_editHint, _setEditHint] = useState(question.hint || '');
+  const [editCorrect, _setEditCorrect] = useState<string[]>(
     Array.isArray(question.correctAnswer) ? question.correctAnswer : 
     (question.correctAnswer ? [question.correctAnswer] : [])
   );
-  const [editImage, setEditImage] = useState(question.imageUrl || '');
-  const [editAudio, setEditAudio] = useState(question.audioUrl || '');
-  const [editTtsEnabled, setEditTtsEnabled] = useState(question.ttsEnabled ?? true);
-  const [editTtsOptionsEnabled, setEditTtsOptionsEnabled] = useState(question.ttsOptionsEnabled ?? false);
-  const [lastFocusedField, setLastFocusedField] = useState<{ field: string, index?: number, start: number, end: number } | null>(null);
+  const [editImage, _setEditImage] = useState(question.imageUrl || '');
+  const [editAudio, _setEditAudio] = useState(question.audioUrl || '');
+  const [editTtsEnabled, _setEditTtsEnabled] = useState(question.ttsEnabled ?? true);
+  const [editTtsOptionsEnabled, _setEditTtsOptionsEnabled] = useState(question.ttsOptionsEnabled ?? false);
+  const [_lastFocusedField, _setLastFocusedField] = useState<{ field: string, index?: number, start: number, end: number } | null>(null);
   
-  const currentColors = COLORS[color] || COLORS.teal;
+  const currentColors = COLORS[color] || COLORS.emerald || { main: '#10b981', light: '#ecfdf5', dark: '#064e3b' };
   
+  /*
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'audio') => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setIsUploading(true);
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `question-media/${fileName}`;
-
-      const { error } = await supabase.storage
-        .from('media')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (error) {
-        // Se o bucket não existir, instruir o usuário
-        if (error.message.includes('bucket not found')) {
-          throw new Error('O bucket "media" não foi encontrado no Supabase. Crie um bucket chamado "media" com acesso público no painel do Supabase.');
-        }
-        throw error;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('media')
-        .getPublicUrl(filePath);
-
-      if (type === 'image') setEditImage(publicUrl);
-      else setEditAudio(publicUrl);
-
-    } catch (err: any) {
-      console.error('Error uploading:', err);
-      window.alert('Erro ao carregar arquivo: ' + err.message);
-    } finally {
-      setIsUploading(false);
-    }
+    ...
   };
+  */
 
   React.useEffect(() => {
     if (savedAnswer !== undefined) setTempAnswer(savedAnswer);
@@ -111,8 +77,8 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
       q: editQ, 
       type: editType, 
       opts: ['mc', 'checkbox'].includes(editType) ? editOpts : undefined,
-      mediator: editMediator,
-      hint: editHint,
+      mediator: _editMediator,
+      hint: _editHint,
       correctAnswer: editCorrect,
       imageUrl: editImage,
       audioUrl: editAudio,
@@ -122,6 +88,7 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
     setIsEditing(false);
   };
 
+  /*
   const toggleCorrect = (opt: string) => {
     if (editCorrect.includes(opt)) {
       setEditCorrect(editCorrect.filter(o => o !== opt));
@@ -159,29 +126,13 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
       setEditCorrect(editCorrect.map(c => c === oldVal ? val : c));
     }
   };
+  */
 
+  /*
   const insertTag = (type: 'PT' | 'EN') => {
-    if (!lastFocusedField) return;
-    
-    const { field, index, start, end } = lastFocusedField;
-    const startTag = `[${type}]`;
-    const endTag = `[/${type}]`;
-
-    if (field === 'title') {
-      const before = editQ.substring(0, start);
-      const selected = editQ.substring(start, end);
-      const after = editQ.substring(end);
-      setEditQ(before + startTag + selected + endTag + after);
-    } else if (field === 'option' && index !== undefined) {
-      const next = [...editOpts];
-      const val = next[index];
-      const before = val.substring(0, start);
-      const selected = val.substring(start, end);
-      const after = val.substring(end);
-      next[index] = before + startTag + selected + endTag + after;
-      setEditOpts(next);
-    }
+    ...
   };
+  */
 
   return (
     <div className={`q-block-v4 ${isDone ? 'is-done' : ''}`} style={{ '--unit-color': currentColors.main, '--unit-bg': currentColors.light } as any}>
@@ -196,7 +147,7 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
         </div>
       )}
 
-      <div className="q-badge-v4" style={{ background: currentColors.main }}>
+      <div className="q-badge-v4" style={{ background: currentColors.accent }}>
         QUESTÃO {index + 1}
       </div>
 
@@ -256,9 +207,7 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
                 <div className="q-options-grid-v4">
                   {question.opts?.map((opt, i) => {
                     const isSelected = tempAnswer === opt;
-                    const isCorrect = Array.isArray(question.correctAnswer) 
-                      ? question.correctAnswer.includes(opt) 
-                      : opt === question.correctAnswer;
+                    
                     
                     return (
                       <button 

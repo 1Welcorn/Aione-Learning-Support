@@ -151,12 +151,12 @@ export const Progress: React.FC<ProgressProps> = ({
       <div id="progress-units" className="progress-list">
         {units.map(unit => {
           const isDone = unitStatus[unit.id];
-          const currentColors = COLORS[unit.color] || COLORS.teal;
+          const unitTheme = COLORS[unit.color] || COLORS.emerald || { main: '#10b981', light: '#ecfdf5', dark: '#064e3b' };
           return (
             <div key={unit.id} className="progress-row-card">
               <div 
                 className="prog-row-icon" 
-                style={{ background: isDone ? currentColors.main : 'var(--bg)', color: isDone ? '#fff' : 'var(--ink4)' }}
+                style={{ background: isDone ? unitTheme.main : 'var(--bg)', color: isDone ? '#fff' : 'var(--ink4)' }}
               >
                 {isDone ? <CheckCircle2 size={24} /> : <Clock size={24} />}
               </div>

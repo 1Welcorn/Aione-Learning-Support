@@ -130,7 +130,7 @@ export const App: React.FC = () => {
           <Home size={24} className="nav-icon" />
           Início
         </button>
-        <button className={`nav-btn ${activeTab === 'activities' ? 'active' : ''}`} onClick={() => setActiveTab('activities')}>
+        <button className={`nav-btn ${activeTab === 'activities' ? 'active' : ''}`} onClick={() => { setActiveTab('activities'); setTargetUnitId(null); }}>
           <Library size={24} className="nav-icon" />
           Aulas
         </button>
@@ -180,6 +180,7 @@ export const App: React.FC = () => {
                   onCreateUnit={createUnit}
                   onGameOver={handleGameOver}
                   initialExpandedId={targetUnitId}
+                  onGoHome={() => setActiveTab('home')}
                 />
              </div>
           )}

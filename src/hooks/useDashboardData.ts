@@ -13,7 +13,7 @@ export const useDashboardData = (userId: string) => {
       // 1. Fetch all units first
       const { data: allUnits, error: unitsError } = await supabase
         .from('units')
-        .select('id, title, sub')
+        .select('id, title, sub, color')
         .order('id');
 
       if (unitsError) {
@@ -28,15 +28,20 @@ export const useDashboardData = (userId: string) => {
         .select('unit_id, status')
         .eq('profile_id', userId);
 
-      // 3. Merge them
+      // 3. Merge and sort
       const merged = (allUnits || []).map(u => {
         const prog = (progressData || []).find(p => p.unit_id === u.id);
         return {
           unit_id: u.id,
           unit_title: u.title,
           unit_sub: u.sub,
+          unit_color: u.color,
           unit_status: prog ? prog.status : 'not_started'
         };
+      }).sort((a, b) => {
+        const numA = parseInt(a.unit_title.match(/\d+/)?.[0] || '999');
+        const numB = parseInt(b.unit_title.match(/\d+/)?.[0] || '999');
+        return numA - numB;
       });
 
       setUnits(merged);

@@ -2,6 +2,7 @@ import { Star, CheckCircle2, Trophy, Sparkles, MessageCircle, Flame } from 'luci
 import { useAuth } from '../../context/AuthContext';
 import { useStudentJourney } from '../../hooks/useStudentJourney';
 import { useDashboardData } from '../../hooks/useDashboardData';
+import { COLORS } from '../../constants';
 
 interface DashboardProps {
   onNavigate: (screen: string, unitId?: string) => void;
@@ -10,6 +11,34 @@ interface DashboardProps {
   mediatorName: string;
   mediatorPhone: string;
 }
+
+const getTrailIcon = (title: string, sub: string, isLocked: boolean, isDone: boolean) => {
+  const t = (sub || title || '').toLowerCase();
+  let base = '';
+  if (t.includes('cozinha') || t.includes('vocabulário da cozinha')) base = 'Aula 1 Vocabulário da Cozinha';
+  else if (t.includes('compreensão oral') || t.includes('escuta')) base = 'Aula 2 Compreensão Oral';
+  else if (t.includes('apresentação pessoal')) base = 'Aula 3 Apresentação Pessoal';
+  else if (t.includes('cotidiano') || t.includes('inglês no cotidiano')) base = 'Aula 4 Inglês no Cotidiano';
+  else if (t.includes('digitais') || t.includes('gêneros')) base = 'Aula 5 Gêneros Digitais';
+  else if (t.includes('receita')) base = 'Aula 6 Receita';
+  else if (t.includes('cores') || t.includes('frutas')) base = 'Aula 7 Cores e Frutas';
+  else if (t.includes('números') || t.includes('quantidade')) base = 'Aula 8 Números e Quantidade';
+
+  if (base) {
+    const suffix = isLocked
+      ? (base === 'Aula 6 Receita' ? '-atividade não iniciada' : '-não iniciada')
+      : '';
+    return (
+      <img
+        src={`/unit-icons/${base}${suffix}.png`}
+        alt={title}
+        style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '12px' }}
+      />
+    );
+  }
+  // Fallback for units without a custom icon
+  return isDone ? <CheckCircle2 size={32} /> : isLocked ? <Trophy size={32} /> : <Sparkles size={32} />;
+};
 
 export const Dashboard: React.FC<DashboardProps> = ({
   onNavigate,
@@ -78,18 +107,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {units.map((unit, idx) => {
                const isDone = unit.unit_status === 'completed';
                const isLocked = idx > 0 && units[idx-1].unit_status !== 'completed';
-               const colors = ['#FF6B6B', '#4ECDC4', '#FFD93D', '#6C5CE7', '#FF8E3C', '#2ECC71'];
-               const color = colors[idx % colors.length];
+               
+               // Match the color with the Unit data
+                const unitTheme: any = COLORS[unit.unit_color] || COLORS.emerald;
+                const color = unitTheme.main;
+                const accent = unitTheme.accent;
 
                return (
                 <div 
                   key={unit.unit_id} 
                   className={`trail-card-v4 ${isDone ? 'is-complete' : ''} ${isLocked ? 'is-locked' : ''}`}
                   onClick={() => !isLocked && onNavigate('activities', unit.unit_id)}
-                  style={{ '--unit-color': color } as any}
+                  style={{ '--unit-color': color, '--unit-accent': accent } as any}
                 >
-                  <div className="trail-card-icon-v4">
-                    {isDone ? <CheckCircle2 size={32} /> : isLocked ? <Trophy size={32} /> : <Sparkles size={32} />}
+                  <div className="trail-card-icon-v4" style={{ color: accent }}>
+                    {getTrailIcon(unit.unit_title, unit.unit_sub, isLocked, isDone)}
                   </div>
                   <div className="trail-card-info-v4">
                     <span className="unit-idx-v4">AULA {idx + 1}</span>
@@ -98,7 +130,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   {isDone && <div className="unit-done-tag">✓</div>}
                 </div>
                );
-            })}
+             })}
           </div>
         ) : (
           <div className="no-units-msg">
