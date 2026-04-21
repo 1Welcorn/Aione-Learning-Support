@@ -378,7 +378,7 @@ export const Activities: React.FC<{
   onGameOver?: (score: number, words: number) => void;
   initialExpandedId?: string | null;
 }> = ({ units, answers, onSaveAnswer, onSaveSession, isAdmin, onUpdateUnit, onCreateUnit, onGameOver, initialExpandedId }) => {
-  const [expandedUnitId, setExpandedUnitId] = useState<string | null>(initialExpandedId);
+  const [expandedUnitId, setExpandedUnitId] = useState<string | null>(initialExpandedId ?? null);
   const [activeGameUnitId, setActiveGameUnitId] = useState<string | null>(null);
 
   React.useEffect(() => {
