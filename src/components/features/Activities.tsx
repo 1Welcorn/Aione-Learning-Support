@@ -11,9 +11,189 @@ import { useAuth } from '../../context/AuthContext';
 import { useStudentJourney } from '../../hooks/useStudentJourney';
 import WordFallGame from './WordFallGame';
 
-// Local QuestionBlock implementation removed in favor of shared component
+// --- STEP NAVIGATION COMPONENT (ONE CARD AT A TIME) ---
+const StepNavigation: React.FC<{
+  unit: Unit;
+  answers: Record<string, any>;
+  onSaveAnswer: (qIdx: number, val: string) => Promise<boolean>;
+  isAdmin?: boolean;
+  editQuestion: (idx: number, newQ: Question) => void;
+  deleteQuestion: (idx: number) => void;
+  currentColors: any;
+  onStartGame?: () => void;
+  handleUpdateUnitContent: (updates: Partial<Unit>) => void;
+  onSaveSession: (note: string) => Promise<boolean>;
+  onToggle: () => void;
+  completeLesson: (uId: string, xp: number) => Promise<void>;
+}> = ({ unit, answers, onSaveAnswer, isAdmin, editQuestion, deleteQuestion, currentColors, onStartGame, handleUpdateUnitContent, onSaveSession, onToggle, completeLesson }) => {
+  const [activeStep, setActiveStep] = useState(0);
+  const [note, setNote] = useState('');
+  const [isSavingSession, setIsSavingSession] = useState(false);
+  const [sessionSuccess, setSessionSuccess] = useState(false);
 
-interface UnitCardProps {
+  // Group all content into steps
+  const embeds = (unit.embed_urls || []).filter(u => u.trim());
+  const steps = [
+    // Step 0: Game Launcher (optional)
+    ...(isAdmin ? [] : [{ type: 'game' }]),
+    // Next: Brief/Instructions
+    ...(unit.brief ? [{ type: 'brief' }] : []),
+    // Next: All embeds
+    ...embeds.map((url, i) => ({ type: 'embed', url, idx: i })),
+    // Next: All questions
+    ...unit.questions.map((q, i) => ({ type: 'question', q, idx: i })),
+    // Final Step: Report
+    { type: 'report' }
+  ];
+
+  const current = steps[activeStep];
+  const isLast = activeStep === steps.length - 1;
+  const isFirst = activeStep === 0;
+
+  const handleNext = () => { if (!isLast) setActiveStep(activeStep + 1); };
+  const handleBack = () => { if (!isFirst) setActiveStep(activeStep - 1); };
+
+  const handleSaveSession = async () => {
+    if (!note.trim() || isSavingSession) return;
+    setIsSavingSession(true);
+    const success = await onSaveSession(note);
+    setIsSavingSession(false);
+    
+    if (success) {
+      await completeLesson(unit.id, 50);
+      setSessionSuccess(true);
+      setNote('');
+      setTimeout(() => {
+        setSessionSuccess(false);
+        onToggle();
+      }, 2000);
+    }
+  };
+
+  return (
+    <div className="step-nav-v4">
+      {/* Progress Bar Top */}
+      <div className="step-progress-v4">
+        <div className="step-progress-track">
+          <div 
+            className="step-progress-fill" 
+            style={{ width: `${(activeStep / (steps.length - 1)) * 100}%`, background: currentColors.main }}
+          />
+        </div>
+        <div className="step-counter-v4">
+          ETAPA {activeStep + 1} DE {steps.length}
+        </div>
+      </div>
+
+      <div className="step-content-v4">
+        {current.type === 'game' && (
+          <div className="game-launcher-card-v4" onClick={onStartGame} style={{ background: currentColors.light }}>
+             <div className="game-icon-v4">🎮</div>
+             <div className="game-info-v4">
+                <h4 style={{ color: currentColors.main }}>DESAFIO WORD FALL!</h4>
+                <p>Pratique as palavras desta lição e ganhe estrelas!</p>
+             </div>
+             <button className="play-game-btn-v4" style={{ background: currentColors.main }}>JOGAR AGORA!</button>
+          </div>
+        )}
+
+        {current.type === 'brief' && (
+          <div className="step-card-v4 brief">
+            <div className="step-header-v4">
+              <Info size={24} style={{ color: currentColors.main }} />
+              <h3>Guia de Estudo</h3>
+            </div>
+            <div className="step-body-v4 brief-text">
+              {unit.brief}
+            </div>
+          </div>
+        )}
+
+        {current.type === 'embed' && (
+          <div className="step-card-v4 embed">
+            <div className="step-header-v4">
+              <Sparkles size={24} style={{ color: currentColors.main }} />
+              <h3>Atividade Interativa {current.idx + 1}</h3>
+            </div>
+            <div className="iframe-responsive-v4">
+              <iframe src={current.url} allowFullScreen />
+            </div>
+          </div>
+        )}
+
+        {current.type === 'question' && (
+          <QuestionBlock 
+            question={current.q}
+            index={current.idx}
+            unitId={unit.id}
+            color={unit.color}
+            isDone={!!answers[`${unit.id}-${current.idx}`]?.is_done}
+            savedAnswer={answers[`${unit.id}-${current.idx}`]?.answer_value || ''}
+            onSaveAnswer={(val) => onSaveAnswer(current.idx, val)}
+            isAdmin={isAdmin}
+            onEdit={(newQ) => editQuestion(current.idx, newQ)}
+            onDelete={() => deleteQuestion(current.idx)}
+            isNew={current.q.q === 'Nova Pergunta'}
+          />
+        )}
+
+        {current.type === 'report' && (
+          <div className="step-card-v4 report">
+            <div className="step-header-v4">
+              <FileText size={24} style={{ color: currentColors.main }} />
+              <h3>Relatório de Atendimento</h3>
+            </div>
+            <p className="report-subtitle-v4">Finalize a lição descrevendo o desempenho da aluna.</p>
+            <textarea 
+              className="report-textarea-v4"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Ex: Ione demonstrou facilidade com o vocabulário..."
+            />
+            <button 
+              className={`save-report-btn-v4 ${sessionSuccess ? 'success' : ''}`}
+              onClick={handleSaveSession}
+              disabled={!note.trim() || isSavingSession}
+              style={{ background: sessionSuccess ? 'var(--teal2)' : currentColors.main }}
+            >
+              {isSavingSession ? 'Salvando...' : sessionSuccess ? 'Lição Concluída!' : 'Salvar e Finalizar'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Navigation Footer */}
+      <div className="step-footer-v4">
+        <button 
+          className={`nav-btn-v4 back ${isFirst ? 'disabled' : ''}`}
+          onClick={handleBack}
+          disabled={isFirst}
+        >
+          <ChevronDown size={24} style={{ transform: 'rotate(90deg)' }} /> Voltar
+        </button>
+
+        {isAdmin && (
+           <div className="admin-step-actions">
+              <button className="admin-add-btn-v4" onClick={() => {
+                const newQ: Question = { q: 'Nova Pergunta', type: 'mc', opts: ['Opção 1'], mediator: '', hint: '' };
+                handleUpdateUnitContent({ questions: [...unit.questions, newQ] });
+              }} title="Adicionar Questão"><Plus size={18} /></button>
+           </div>
+        )}
+
+        <button 
+          className={`nav-btn-v4 next ${isLast ? 'disabled' : ''}`}
+          onClick={handleNext}
+          disabled={isLast}
+          style={{ background: currentColors.main }}
+        >
+          {isLast ? 'Fim da Aula' : 'Próximo'} <ChevronDown size={24} style={{ transform: 'rotate(-90deg)' }} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
   unit: Unit;
   answers: Record<string, any>;
   onSaveAnswer: (qIdx: number, val: string) => Promise<boolean>;
@@ -160,218 +340,21 @@ export const UnitCard: React.FC<UnitCardProps> = ({
       </div>
 
         {isExpanded && (
-        <div className="unit-body">
-          {/* GAME LAUNCHER */}
-          {!isAdmin && (
-            <div className="game-launcher-card" onClick={onStartGame}>
-               <div className="game-icon-v4">🎮</div>
-               <div className="game-info-v4">
-                  <h4>DESAFIO WORD FALL!</h4>
-                  <p>Pratique as palavras desta lição e ganhe estrelas!</p>
-               </div>
-               <button className="play-game-btn-v4">JOGAR AGORA!</button>
-            </div>
-          )}
-
-          {unit.brief && (
-            <div className="mediator-brief-container">
-              <button 
-                className={`mediator-hint-btn ${showBrief ? 'active' : ''}`}
-                onClick={() => setShowBrief(!showBrief)}
-                style={{ marginBottom: showBrief ? '12px' : '0' }}
-              >
-                <FileText size={16} /> {showBrief ? 'Ocultar Guia da Mediadora' : 'Ver Guia da Mediadora'}
-              </button>
-              
-              {showBrief && (
-                <div className="mediator-brief">
-                  <div className="brief-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    Guia Geral da Mediadora
-                    {isAdmin && !isEditingBrief && (
-                      <button className="admin-mini-btn" onClick={() => { setIsEditingBrief(true); setTempBrief(unit.brief || ''); }}>
-                        <Edit2 size={12} />
-                      </button>
-                    )}
-                  </div>
-                  {isEditingBrief ? (
-                    <div className="admin-inline-edit-box" style={{ display: 'flex', gap: '12px', marginTop: '8px', alignItems: 'flex-start' }}>
-                      <textarea 
-                        className="admin-inline-input" 
-                        style={{ minHeight: '80px', flex: 1 }}
-                        value={tempBrief}
-                        onChange={(e) => setTempBrief(e.target.value)}
-                      />
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <button className="admin-save-tiny" onClick={() => { handleUpdateUnitContent({ brief: tempBrief }); setIsEditingBrief(false); }} title="Salvar">
-                          <Check size={18} />
-                        </button>
-                        <button className="admin-cancel-tiny" onClick={() => setIsEditingBrief(false)} title="Cancelar">
-                          <X size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    unit.brief
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {Array.isArray(unit.embed_urls) && unit.embed_urls.filter(u => u.trim()).length > 0 && (
-            <div className="embed-container-wrapper">
-              <div className="brief-label">Atividades Interativas</div>
-              <div className="embed-scroll-grid">
-                {unit.embed_urls.filter(u => u.trim()).map((url, idx) => (
-                  <div key={idx} className="embed-block">
-                    <div className="embed-label" style={{ color: currentColors.main, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
-                        {editingEmbedIdx === idx ? (
-                          <div className="admin-inline-edit-box">
-                            <input 
-                              type="text" 
-                              value={tempEmbedUrl} 
-                              onChange={(e) => setTempEmbedUrl(e.target.value)}
-                              className="admin-inline-input"
-                            />
-                            <button className="admin-save-small" onClick={() => saveEmbedEdit(idx)}><Check size={14} /></button>
-                            <button className="admin-cancel-small" onClick={() => setEditingEmbedIdx(null)}><X size={14} /></button>
-                          </div>
-                        ) : (
-                          `Interativa ${idx + 1}`
-                        )}
-                      </div>
-                      
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                        <label className="embed-check-label" style={{ fontSize: '11px', color: 'var(--ink4)', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
-                          <span title="Este campo é para uso da Mediadora/Professor">Concluída? (Mediadora)</span>
-                          <input 
-                            type="checkbox" 
-                            checked={!!answers[`${unit.id}-${1000 + idx}`]?.is_done}
-                            onChange={(e) => onSaveAnswer(1000 + idx, e.target.checked ? 'COMPLETA' : '')}
-                            style={{ width: '16px', height: '16px', accentColor: currentColors.main }}
-                          />
-                        </label>
-
-                        {isAdmin && (
-                          <div style={{ display: 'flex', gap: '6px' }}>
-                            <button className="admin-mini-btn" style={{ padding: '4px', height: '24px', width: '24px' }} onClick={() => { setEditingEmbedIdx(idx); setTempEmbedUrl(url); }}>
-                              <Edit2 size={12} />
-                            </button>
-                            <button className="admin-mini-btn del" style={{ padding: '4px', height: '24px', width: '24px' }} onClick={() => deleteEmbed(idx)}>
-                              <Trash2 size={12} />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="iframe-responsive">
-                      <iframe 
-                        src={url} 
-                        title={`${unit.title} - Atividade ${idx + 1}`}
-                        allowFullScreen 
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {unit.questions.map((q, i) => {
-            if (!isAdmin && (q.q === 'Nova Pergunta' || !q.q.trim())) return null;
-            const embedCount = Array.isArray(unit.embed_urls) ? unit.embed_urls.filter(u => u.trim()).length : 0;
-            return (
-              <QuestionBlock 
-                key={i}
-                question={q}
-                index={embedCount + i}
-                unitId={unit.id}
-                color={unit.color}
-                isDone={!!answers[`${unit.id}-${i}`]?.is_done}
-                savedAnswer={answers[`${unit.id}-${i}`]?.answer_value || ''}
-                onSaveAnswer={(val) => onSaveAnswer(i, val)}
-                isAdmin={isAdmin}
-                onEdit={(newQ) => editQuestion(i, newQ)}
-                onDelete={() => deleteQuestion(i)}
-                isNew={q.q === 'Nova Pergunta'}
-              />
-            );
-          })}
-
-          {isAdmin && (
-            <div className="admin-quick-actions-v4">
-              <button 
-                className="action-card-v4 purple" 
-                onClick={() => {
-                  const url = window.prompt('Cole o link de incorporação (Canva, HTML, etc):');
-                  if (url) {
-                    const newUrls = [...(unit.embed_urls || []), url];
-                    handleUpdateUnitContent({ embed_urls: newUrls });
-                  }
-                }}
-              >
-                <div className="action-icon-v4"><Plus size={20} /></div>
-                <div className="action-text-v4">
-                  <strong>Postar Atividade</strong>
-                  <span>Canva, HTML ou Jogos</span>
-                </div>
-              </button>
-
-              <button 
-                className="action-card-v4 blue" 
-                onClick={() => {
-                  const newQ: Question = { 
-                    q: 'Nova Pergunta', 
-                    type: 'mc', 
-                    opts: ['Opção 1'],
-                    mediator: '', 
-                    hint: '' 
-                  };
-                  const newQs = [...unit.questions, newQ];
-                  handleUpdateUnitContent({ questions: newQs });
-                }}
-              >
-                <div className="action-icon-v4"><ClipboardList size={20} /></div>
-                <div className="action-text-v4">
-                  <strong>Nova Questão</strong>
-                  <span>Estilo Google Forms</span>
-                </div>
-              </button>
-            </div>
-          )}
-
-          <div className="session-reporting-card">
-              <div className="reporting-header">
-                <FileText size={20} style={{ color: currentColors.main }} />
-                <div className="reporting-title">Relatório de Atendimento</div>
-              </div>
-              <p className="reporting-subtitle">
-                Descreva as observações pedagógicas, sucessos e desafios desta sessão.
-              </p>
-              <textarea 
-                className="reporting-textarea" 
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Ex: Ione demonstrou facilidade com o vocabulário de cozinha, mas precisou de ajuda na pronúncia de 'spoon'..."
-              />
-              <div className="reporting-actions">
-                <button 
-                  className={`save-session-btn ${sessionSuccess ? 'success' : ''}`}
-                  onClick={handleSaveSession}
-                  disabled={!note.trim() || isSavingSession}
-                  style={{ background: sessionSuccess ? 'var(--teal2)' : currentColors.main }}
-                >
-                  {isSavingSession ? (
-                    <div className="loader-spinner" style={{ width: '18px', height: '18px' }}></div>
-                  ) : sessionSuccess ? (
-                    <><CheckCircle2 size={18} /> Relatório Salvo!</>
-                  ) : (
-                    <><CheckCircle2 size={18} /> Finalizar e Salvar Relatório</>
-                  )}
-                </button>
-              </div>
-            </div>
+        <div className="unit-body-v4">
+          <StepNavigation 
+            unit={unit} 
+            answers={answers} 
+            onSaveAnswer={onSaveAnswer}
+            isAdmin={isAdmin}
+            editQuestion={editQuestion}
+            deleteQuestion={deleteQuestion}
+            currentColors={currentColors}
+            onStartGame={onStartGame}
+            handleUpdateUnitContent={handleUpdateUnitContent}
+            onSaveSession={onSaveSession}
+            onToggle={onToggle}
+            completeLesson={completeLesson}
+          />
         </div>
       )}
     </div>
