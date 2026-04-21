@@ -9,6 +9,36 @@ interface PlanningEditorProps {
   onBack: () => void;
 }
 
+const normalizeEmbedUrl = (rawUrl: string): string => {
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return '';
+
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+  try {
+    const url = new URL(withProtocol);
+
+    if (url.hostname.includes('drive.google.com')) {
+      url.pathname = url.pathname.replace(/\/view$/, '/preview');
+      return url.toString();
+    }
+
+    if (url.hostname.includes('youtube.com') && url.pathname === '/watch') {
+      const videoId = url.searchParams.get('v');
+      if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+    }
+
+    if (url.hostname.includes('youtu.be')) {
+      const videoId = url.pathname.replace('/', '');
+      if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+    }
+
+    return url.toString();
+  } catch {
+    return trimmed;
+  }
+};
+
 const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
   const [loading, setLoading] = useState(true);
   const [unitData, setUnitData] = useState<any>(null);
@@ -50,7 +80,7 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
     setIsSavingEmbed(true);
     setEmbedSaved(false);
     const current = Array.isArray(unitData.embed_urls) ? unitData.embed_urls : [];
-    const nextEmbeds = [...current, tempEmbed.trim()];
+    const nextEmbeds = [...current, normalizeEmbedUrl(tempEmbed)];
     const { data, error } = await supabase
       .from('units')
       .update({ embed_urls: nextEmbeds })

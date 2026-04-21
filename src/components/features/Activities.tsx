@@ -44,6 +44,36 @@ interface ReportStep extends BaseStep {
 
 type StepContent = GameStep | BriefStep | EmbedStep | QuestionStep | ReportStep;
 
+const normalizeEmbedUrl = (rawUrl: string): string => {
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return '';
+
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+  try {
+    const url = new URL(withProtocol);
+
+    if (url.hostname.includes('drive.google.com')) {
+      url.pathname = url.pathname.replace(/\/view$/, '/preview');
+      return url.toString();
+    }
+
+    if (url.hostname.includes('youtube.com') && url.pathname === '/watch') {
+      const videoId = url.searchParams.get('v');
+      if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+    }
+
+    if (url.hostname.includes('youtu.be')) {
+      const videoId = url.pathname.replace('/', '');
+      if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+    }
+
+    return url.toString();
+  } catch {
+    return trimmed;
+  }
+};
+
 // --- STEP NAVIGATION COMPONENT (ONE CARD AT A TIME) ---
 const StepNavigation: React.FC<{
   unit: Unit;
@@ -81,7 +111,9 @@ const StepNavigation: React.FC<{
   }, []);
 
   // Group all content into steps
-  const embeds = (unit.embed_urls || []).filter(u => u.trim());
+  const embeds = (unit.embed_urls || [])
+    .map(normalizeEmbedUrl)
+    .filter(u => u.trim());
   const steps: StepContent[] = [
     // Step 0: Game Launcher (optional)
     ...(isAdmin ? [] : [{ type: 'game' as const }]),
@@ -225,7 +257,23 @@ const StepNavigation: React.FC<{
                   ✕ Sair
                 </button>
               )}
-              <iframe src={(current as EmbedStep).url} allowFullScreen />
+              <iframe
+                src={(current as EmbedStep).url}
+                allow="fullscreen; autoplay; clipboard-read; clipboard-write"
+                allowFullScreen
+                referrerPolicy="strict-origin-when-cross-origin"
+              />
+            </div>
+            <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'flex-end' }}>
+              <a
+                href={(current as EmbedStep).url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="admin-btn-v4"
+                style={{ textDecoration: 'none' }}
+              >
+                Abrir atividade em nova aba
+              </a>
             </div>
           </div>
         )}
