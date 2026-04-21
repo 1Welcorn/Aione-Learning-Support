@@ -157,14 +157,10 @@ export const App: React.FC = () => {
                   setActiveTab(screen);
                   if (unitId) setTargetUnitId(unitId);
                 }}
-                units={units}
-                answers={answers}
                 completedPct={completedPct}
                 sessionsCount={sessions.length}
-                lastSessionDate={sessions[0]?.session_date || ''}
                 mediatorName={settings?.med_name || 'Geocélia'}
                 mediatorPhone={settings?.med_phone || '554391637162'}
-                studentEmail={settings?.student_email}
              />
           )}
           {activeTab === 'activities' && (
