@@ -76,32 +76,39 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       {/* CENTER: ADVENTURE TRAIL GRID */}
       <div className="dash-main-area-v4">
-        <div className="trail-grid-v4">
-          {units.map((unit, idx) => {
-             const isDone = unit.unit_status === 'completed';
-             const isLocked = idx > 0 && units[idx-1].unit_status !== 'completed';
-             const colors = ['#FF6B6B', '#4ECDC4', '#FFD93D', '#6C5CE7', '#FF8E3C', '#2ECC71'];
-             const color = colors[idx % colors.length];
+        {units.length > 0 ? (
+          <div className="trail-grid-v4">
+            {units.map((unit, idx) => {
+               const isDone = unit.unit_status === 'completed';
+               const isLocked = idx > 0 && units[idx-1].unit_status !== 'completed';
+               const colors = ['#FF6B6B', '#4ECDC4', '#FFD93D', '#6C5CE7', '#FF8E3C', '#2ECC71'];
+               const color = colors[idx % colors.length];
 
-             return (
-              <div 
-                key={unit.unit_id} 
-                className={`trail-card-v4 ${isDone ? 'is-complete' : ''} ${isLocked ? 'is-locked' : ''}`}
-                onClick={() => !isLocked && onNavigate('activities', unit.unit_id)}
-                style={{ '--unit-color': color } as any}
-              >
-                <div className="trail-card-icon-v4">
-                  {isDone ? <CheckCircle2 size={24} /> : isLocked ? <Trophy size={24} /> : <Sparkles size={24} />}
+               return (
+                <div 
+                  key={unit.unit_id} 
+                  className={`trail-card-v4 ${isDone ? 'is-complete' : ''} ${isLocked ? 'is-locked' : ''}`}
+                  onClick={() => !isLocked && onNavigate('activities', unit.unit_id)}
+                  style={{ '--unit-color': color } as any}
+                >
+                  <div className="trail-card-icon-v4">
+                    {isDone ? <CheckCircle2 size={24} /> : isLocked ? <Trophy size={24} /> : <Sparkles size={24} />}
+                  </div>
+                  <div className="trail-card-info-v4">
+                    <span className="unit-idx-v4">AULA {idx + 1}</span>
+                    <h3 className="unit-title-v4">{unit.unit_title}</h3>
+                  </div>
+                  {isDone && <div className="unit-done-tag">✓</div>}
                 </div>
-                <div className="trail-card-info-v4">
-                  <span className="unit-idx-v4">AULA {idx + 1}</span>
-                  <h3 className="unit-title-v4">{unit.unit_title}</h3>
-                </div>
-                {isDone && <div className="unit-done-tag">✓</div>}
-              </div>
-             );
-          })}
-        </div>
+               );
+            })}
+          </div>
+        ) : (
+          <div className="no-units-msg">
+             <h3>Nenhuma aula encontrada</h3>
+             <p>Ainda não há lições no seu caminho. Que tal adicionar uma?</p>
+          </div>
+        )}
       </div>
 
       {/* BOTTOM: MEDIATOR */}

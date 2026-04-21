@@ -16,10 +16,26 @@ export const useDashboardData = (userId: string) => {
         .select('*')
         .eq('profile_id', userId);
 
-      if (!error) {
-        setUnits(data || []);
+      if (!error && data && data.length > 0) {
+        setUnits(data);
       } else {
-        console.error('Error fetching dashboard view:', error);
+        if (error) console.error('Error fetching dashboard view:', error);
+        // Fallback: Fetch directly from 'units' if view fails or is empty
+        const { data: unitsData, error: unitsError } = await supabase
+          .from('units')
+          .select('*')
+          .order('id');
+        
+        if (!unitsError) {
+          // Map to match the view's structure
+          const mapped = (unitsData || []).map(u => ({
+            ...u,
+            unit_id: u.id,
+            unit_title: u.title,
+            unit_status: 'not_started'
+          }));
+          setUnits(mapped);
+        }
       }
       setLoading(false);
     };

@@ -500,4 +500,15 @@
     align-items: center;
     gap: 8px;
   }
+
+  .no-units-msg {
+    text-align: center;
+    color: var(--ink3);
+  }
+
+  .no-units-msg h3 {
+    font-size: 20px;
+    margin-bottom: 8px;
+    color: var(--ink1);
+  }
 }
