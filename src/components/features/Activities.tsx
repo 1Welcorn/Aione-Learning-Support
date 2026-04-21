@@ -19,6 +19,7 @@ interface UnitCardProps {
   isExpanded: boolean;
   onToggle: () => void;
   onStartGame?: () => void;
+  id?: string;
 }
 
 const getUnitIcon = (title: string) => {
@@ -33,7 +34,7 @@ const getUnitIcon = (title: string) => {
 };
 
 export const UnitCard: React.FC<UnitCardProps> = ({ 
-  unit, answers, onSaveAnswer, onSaveSession, isAdmin, onUpdateUnit, isExpanded, onToggle, onStartGame 
+  unit, answers, onSaveAnswer, onSaveSession, isAdmin, onUpdateUnit, isExpanded, onToggle, onStartGame, id
 }) => {
   const [note, setNote] = useState('');
   const [isSavingSession, setIsSavingSession] = useState(false);
@@ -113,7 +114,7 @@ export const UnitCard: React.FC<UnitCardProps> = ({
   const isComplete = questionsDone === unit.questions.length;
 
   return (
-    <div className={`adventure-card ${isExpanded ? 'expanded' : ''}`} style={{ borderBottomColor: currentColors.main }}>
+    <div id={id} className={`adventure-card ${isExpanded ? 'expanded' : ''}`} style={{ borderBottomColor: currentColors.main }}>
       <div className="unit-hdr-v4" onClick={onToggle}>
         <div className="unit-icon-island" style={{ background: currentColors.light, color: currentColors.main }}>
           {getUnitIcon(unit.title)}
@@ -377,8 +378,19 @@ export const Activities: React.FC<{
   onGameOver?: (score: number, words: number) => void;
   initialExpandedId?: string | null;
 }> = ({ units, answers, onSaveAnswer, onSaveSession, isAdmin, onUpdateUnit, onCreateUnit, onGameOver, initialExpandedId }) => {
-  const [expandedUnitId, setExpandedUnitId] = useState<string | null>(initialExpandedId || null);
+  const [expandedUnitId, setExpandedUnitId] = useState<string | null>(initialExpandedId);
   const [activeGameUnitId, setActiveGameUnitId] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (initialExpandedId) {
+      setExpandedUnitId(initialExpandedId);
+      // Optional: Scroll to the unit
+      setTimeout(() => {
+        const element = document.getElementById(`unit-${initialExpandedId}`);
+        if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+  }, [initialExpandedId]);
   
   const handleCreateUnit = async () => {
     const title = window.prompt('Qual o título da nova unidade?');
@@ -393,6 +405,7 @@ export const Activities: React.FC<{
         {units.map((unit) => (
           <UnitCard 
             key={unit.id} 
+            id={`unit-${unit.id}`}
             unit={unit} 
             answers={answers}
             onSaveAnswer={(qIdx, val) => onSaveAnswer(unit.id, qIdx, val)}
