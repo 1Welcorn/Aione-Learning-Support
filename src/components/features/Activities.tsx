@@ -94,6 +94,7 @@ const StepNavigation: React.FC<{
   const [note, setNote] = useState('');
   const [isSavingSession, setIsSavingSession] = useState(false);
   const [sessionSuccess, setSessionSuccess] = useState(false);
+  const [stepReward, setStepReward] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
   const [hintPos, setHintPos] = useState<{ top: number; left: number } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -131,7 +132,34 @@ const StepNavigation: React.FC<{
   const isLast = activeStep === steps.length - 1;
   const isFirst = activeStep === 0;
 
-  const handleNext = () => { if (!isLast) setActiveStep(activeStep + 1); };
+  const missionByStepType: Record<StepType, string> = {
+    game: 'Missao: Ganhe estrelas no desafio de palavras.',
+    brief: 'Missao: Leia o guia e descubra o foco da aula.',
+    embed: 'Missao: Complete a atividade interativa com atencao.',
+    question: 'Missao: Responda com calma e mostre o que aprendeu.',
+    report: 'Missao final: Conte como foi a aula de hoje.'
+  };
+
+  const mascotByStepType: Record<StepType, string> = {
+    game: 'Vamos jogar!',
+    brief: 'Vamos aprender!',
+    embed: 'Hora da atividade!',
+    question: 'Voce consegue!',
+    report: 'Mandou bem!'
+  };
+
+  useEffect(() => {
+    if (!stepReward) return;
+    const timer = window.setTimeout(() => setStepReward(false), 1300);
+    return () => window.clearTimeout(timer);
+  }, [stepReward]);
+
+  const handleNext = () => {
+    if (!isLast) {
+      setStepReward(true);
+      setActiveStep(activeStep + 1);
+    }
+  };
   const handleBack = () => { if (!isFirst) setActiveStep(activeStep - 1); };
 
   const handleSaveSession = async () => {
@@ -167,6 +195,17 @@ const StepNavigation: React.FC<{
       </div>
 
       <div className="step-content-v4">
+        <div className="kid-mission-panel-v4" style={{ borderColor: currentColors.light }}>
+          <div className="kid-mission-left">
+            <div className="kid-mascot-avatar">🦊</div>
+            <div>
+              <div className="kid-mascot-line">{mascotByStepType[current.type]}</div>
+              <div className="kid-mission-line">{missionByStepType[current.type]}</div>
+            </div>
+          </div>
+          <div className="kid-reward-chip">+10 XP</div>
+        </div>
+
         {current.type === 'game' && (
           <div className="game-launcher-card-v4" onClick={onStartGame} style={{ background: currentColors.light }}>
              <div className="game-icon-v4">🎮</div>
@@ -264,17 +303,6 @@ const StepNavigation: React.FC<{
                 referrerPolicy="strict-origin-when-cross-origin"
               />
             </div>
-            <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'flex-end' }}>
-              <a
-                href={(current as EmbedStep).url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="admin-btn-v4"
-                style={{ textDecoration: 'none' }}
-              >
-                Abrir atividade em nova aba
-              </a>
-            </div>
           </div>
         )}
 
@@ -357,6 +385,13 @@ const StepNavigation: React.FC<{
           {isLast ? 'Fim da Aula' : 'Próximo'} <ChevronRight size={20} />
         </button>
       </div>
+
+      {stepReward && (
+        <div className="kid-reward-burst-v4">
+          <span>⭐ +10 XP</span>
+          <span>🎉</span>
+        </div>
+      )}
     </div>
   );
 };
