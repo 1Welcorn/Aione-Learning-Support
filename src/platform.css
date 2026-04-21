@@ -370,8 +370,10 @@
     align-items: center;
     justify-content: center;
     overflow-y: auto;
+    overflow-x: hidden;
     scrollbar-width: none;
-    padding: 10px 0;
+    padding: 10px 20px;
+    width: 100%;
   }
 
   .dash-main-area-v4::-webkit-scrollbar { display: none; }
@@ -405,10 +407,11 @@
 
   .trail-grid-v4 {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 24px;
+    grid-template-columns: repeat(6, minmax(140px, 1fr));
+    gap: 16px;
     width: 100%;
-    max-width: 1700px;
+    max-width: 1600px;
+    margin: 0 auto;
   }
 
   .trail-card-v4 {
