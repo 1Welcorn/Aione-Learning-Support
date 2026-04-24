@@ -1,4 +1,17 @@
 -- 1. CRIAÇÃO DAS TABELAS
+CREATE TABLE IF NOT EXISTS profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT,
+  name TEXT,
+  xp INTEGER DEFAULT 0,
+  level INTEGER DEFAULT 1,
+  stars INTEGER DEFAULT 0,
+  streak INTEGER DEFAULT 0,
+  last_activity_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS units (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
@@ -17,6 +30,17 @@ CREATE TABLE IF NOT EXISTS units (
   external_links JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS student_progress (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  profile_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  unit_id TEXT REFERENCES units(id) ON DELETE CASCADE,
+  status TEXT DEFAULT 'not_started',
+  score INTEGER DEFAULT 0,
+  completed_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(profile_id, unit_id)
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
