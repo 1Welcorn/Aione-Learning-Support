@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 // Build trigger: a452db8
 import { useAuth } from './context/AuthContext';
-import { Home, Library, BarChart3, ClipboardList, MessageCircle } from 'lucide-react';
+import { Home, BookOpen, BarChart2, ClipboardList, MessageCircle, Lock } from 'lucide-react';
 import { LoginScreen } from './components/features/LoginScreen';
 import { Dashboard } from './components/features/Dashboard';
 import { Activities } from './components/features/Activities';
