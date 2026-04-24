@@ -1,4 +1,5 @@
 import React, { useRef, useState, useImperativeHandle } from 'react';
+import { Play, Sparkles } from 'lucide-react';
 
 export type EmbedPreviewHandle = {
   open: () => void;
@@ -31,21 +32,40 @@ const EmbedPreview = React.forwardRef<EmbedPreviewHandle, { url: string; title?:
     <>
       <div className="embed-preview" role="button" onClick={openFullscreen}>
         <div className="embed-preview-inner">
+          <div className="embed-play-overlay">
+            <div className="embed-play-btn">
+              <Play size={40} fill="white" />
+            </div>
+            <span className="embed-play-label">CLIQUE PARA JOGAR</span>
+          </div>
+
           {thumbnailUrl ? (
             <img src={thumbnailUrl} alt={title || 'Preview'} className="embed-thumbnail" />
           ) : (
-            <div className="embed-board">
-              <div className="embed-col">
-                <div className="embed-col-title">Objetos</div>
-                <div className="embed-card">Drop OBJECT here</div>
+            <div className="embed-board modern">
+              <div className="embed-board-header">
+                <Sparkles size={20} color="#6366f1" />
+                <span>LIÇÃO INTERATIVA</span>
               </div>
-              <div className="embed-col">
-                <div className="embed-col-title">Ações</div>
-                <div className="embed-card">Drop ACTION here</div>
+              <div className="embed-board-body">
+                <div className="embed-col">
+                  <div className="embed-col-title">OBJETOS</div>
+                  <div className="embed-card-v2"></div>
+                  <div className="embed-card-v2"></div>
+                </div>
+                <div className="embed-col">
+                  <div className="embed-col-title">AÇÕES</div>
+                  <div className="embed-card-v2 accent"></div>
+                  <div className="embed-card-v2"></div>
+                </div>
+                <div className="embed-col">
+                  <div className="embed-col-title">TRADUÇÃO</div>
+                  <div className="embed-card-v2"></div>
+                  <div className="embed-card-v2 accent"></div>
+                </div>
               </div>
-              <div className="embed-col">
-                <div className="embed-col-title">Traduções alinhadas</div>
-                <div className="embed-card">A tradução fica alinhada com a ação</div>
+              <div className="embed-board-footer">
+                DESAFIO DE ASSOCIAÇÃO RÁPIDA
               </div>
             </div>
           )}
