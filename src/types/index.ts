@@ -68,3 +68,12 @@ export interface AppSettings {
 }
 
 export type UserRole = 'admin' | 'mediator' | 'student' | null;
+
+export interface Lesson {
+  id: string;
+  title: string;
+  status: 'locked' | 'not_started' | 'completed';
+  iconOutline: string; // Caminho para a imagem P&B
+  icon3D: string;      // Caminho para a imagem colorida
+  xpValue: number;
+}

@@ -8,6 +8,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useStudentJourney } from '../../hooks/useStudentJourney';
 import { useDashboardData } from '../../hooks/useDashboardData';
 import { COLORS } from '../../constants';
+import { LessonCard } from '../ui/LessonCard';
+import { Lesson } from '../../types';
 
 interface DashboardProps {
   onNavigate: (screen: string, unitId?: string) => void;
@@ -16,43 +18,6 @@ interface DashboardProps {
   mediatorName: string;
   mediatorPhone: string;
 }
-
-const getTrailIcon = (title: string, sub: string, isLocked: boolean, isDone: boolean) => {
-  const t = (sub || title || '').toLowerCase();
-  let base = '';
-  let emoji = '📚';
-
-  // Logic to find the correct PNG base name
-  if (t.includes('cozinha')) { base = 'Aula 1 Vocabulário da Cozinha'; emoji = '👨‍🍳'; }
-  else if (t.includes('oral') || t.includes('escuta')) { base = 'Aula 2 Compreensão Oral'; emoji = '🎧'; }
-  else if (t.includes('apresentação')) { base = 'Aula 3 Apresentação Pessoal'; emoji = '🤝'; }
-  else if (t.includes('cotidiano')) { base = 'Aula 4 Inglês no Cotidiano'; emoji = '🤖'; }
-  else if (t.includes('digitais')) { base = 'Aula 5 Gêneros Digitais'; emoji = '📱'; }
-  else if (t.includes('receita')) { base = 'Aula 6 Receita'; emoji = '📖'; }
-  else if (t.includes('cores')) { base = 'Aula 7 Cores e Frutas'; emoji = '🎨'; }
-  else if (t.includes('números')) { base = 'Aula 8 Números e Quantidade'; emoji = '🔢'; }
-
-  if (base) {
-    const suffix = isLocked
-      ? (base === 'Aula 6 Receita' ? '-atividade não iniciada' : '-não iniciada')
-      : '';
-    return (
-      <img
-        src={`/unit-icons/${base}${suffix}.png`}
-        alt={title}
-        className="lesson-img-v5"
-        onError={(e) => {
-          // Fallback to emoji if image fails to load
-          (e.target as any).style.display = 'none';
-          (e.target as any).parentElement.innerHTML = `<span style="font-size: 32px">${emoji}</span>`;
-        }}
-      />
-    );
-  }
-
-  if (isLocked) return <Lock className="text-slate-400" size={32} />;
-  return <span style={{ fontSize: '32px' }}>{emoji}</span>;
-};
 
 export const Dashboard: React.FC<DashboardProps> = ({
   onNavigate,
@@ -117,43 +82,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {units.map((unit, idx) => {
           const isDone = unit.unit_status === 'completed';
           const isLocked = idx > 0 && units[idx-1].unit_status !== 'completed';
-          const isCurrent = !isDone && !isLocked;
+          
+          // Map Unit to Lesson interface
+          const lessonData: Lesson = {
+            id: unit.unit_id,
+            title: unit.unit_sub || unit.unit_title,
+            status: isDone ? 'completed' : (isLocked ? 'locked' : 'not_started'),
+            iconOutline: `/unit-icons/${unit.unit_title}-não iniciada.png`, // Defaulting to naming convention
+            icon3D: `/unit-icons/${unit.unit_title}.png`,
+            xpValue: 100
+          };
 
           return (
-            <motion.div
-              key={unit.unit_id}
-              whileHover={!isLocked ? { scale: 1.05, y: -5 } : {}}
-              className={`lesson-card-v5 ${isLocked ? 'is-locked' : ''} ${isCurrent ? 'is-current' : ''}`}
+            <LessonCard 
+              key={unit.unit_id} 
+              lesson={lessonData} 
+              idx={idx}
               onClick={() => !isLocked && onNavigate('activities', unit.unit_id)}
-            >
-              {isDone && (
-                <div className="lesson-check">
-                   <CheckCircle2 size={24} fill="#10b981" stroke="white" />
-                </div>
-              )}
-              
-              <div className="lesson-icon-v5">
-                {getTrailIcon(unit.unit_title, unit.unit_sub, isLocked, isDone)}
-              </div>
-              
-              <span className="lesson-id-tag">Aula {idx + 1}</span>
-              <h3 className="lesson-title-v5">{unit.unit_sub || unit.unit_title}</h3>
-              
-              {!isLocked && (
-                <div className="lesson-progress-v5">
-                   <div className="lesson-bar-bg">
-                      <div className="lesson-bar-fill" style={{ width: isDone ? '100%' : (isCurrent ? '30%' : '0%') }} />
-                   </div>
-                   <span className="lesson-xp-tag">100 XP</span>
-                </div>
-              )}
-              
-              {isCurrent && (
-                <button className="lesson-play-btn">
-                  COMEÇAR AGORA!
-                </button>
-              )}
-            </motion.div>
+            />
           );
         })}
         
