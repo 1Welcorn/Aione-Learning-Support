@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Question, QuestionType } from '../../types';
 import { COLORS } from '../../constants';
-import { Info, CheckCircle, Volume2, Edit2, Trash2, Check, Circle, Music } from 'lucide-react';
+import { Info, CheckCircle, Volume2, Edit2, Trash2, Check, Circle, Music, Plus } from 'lucide-react';
 import { speechService } from '../../utils/speech';
 // import { supabase } from '../../services/supabase';
 
@@ -33,12 +33,19 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
   const [isEditing, setIsEditing] = useState(isNew || false);
   const [editQ, setEditQ] = useState(question.q);
   const [editType, _setEditType] = useState<QuestionType>(question.type);
-  const [editOpts, _setEditOpts] = useState<string[]>(question.opts || []);
+  const [editOpts, setEditOpts] = useState<string[]>(question.opts || []);
   const [_editMediator, _setEditMediator] = useState(question.mediator || '');
   const [_editHint, _setEditHint] = useState(question.hint || '');
-  const [editCorrect, _setEditCorrect] = useState<string[]>(
+  const [editCorrect, setEditCorrect] = useState<string[]>(
     Array.isArray(question.correctAnswer) ? question.correctAnswer : 
-    (question.correctAnswer ? [question.correctAnswer] : [])
+    (question.correctAnswer && typeof question.correctAnswer === 'string' ? [question.correctAnswer] : [])
+  );
+  const [editOpenCorrect, setEditOpenCorrect] = useState(() =>
+    typeof question.correctAnswer === 'string'
+      ? question.correctAnswer
+      : Array.isArray(question.correctAnswer)
+        ? question.correctAnswer.join('\n')
+        : ''
   );
   const [editImage, _setEditImage] = useState(question.imageUrl || '');
   const [editAudio, _setEditAudio] = useState(question.audioUrl || '');
@@ -58,6 +65,17 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
     if (savedAnswer !== undefined) setTempAnswer(savedAnswer);
   }, [savedAnswer]);
 
+  React.useEffect(() => {
+    if (!isEditing) return;
+    setEditOpenCorrect(
+      typeof question.correctAnswer === 'string'
+        ? question.correctAnswer
+        : Array.isArray(question.correctAnswer)
+          ? question.correctAnswer.join('\n')
+          : ''
+    );
+  }, [isEditing, question.correctAnswer]);
+
   const handleSave = async (val: string) => {
     if (!onSaveAnswer || isSaving) return;
     setIsSaving(true);
@@ -72,6 +90,13 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
   };
 
   const handleConfirmEdit = () => {
+    const openTypes: QuestionType[] = ['text', 'paragraph'];
+    const correctForType =
+      openTypes.includes(editType)
+        ? (editOpenCorrect.trim() ? editOpenCorrect.trim() : undefined)
+        : editCorrect.length
+          ? editCorrect
+          : undefined;
     if (onEdit) onEdit({ 
       ...question, 
       q: editQ, 
@@ -79,7 +104,7 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
       opts: ['mc', 'checkbox'].includes(editType) ? editOpts : undefined,
       mediator: _editMediator,
       hint: _editHint,
-      correctAnswer: editCorrect,
+      correctAnswer: correctForType as Question['correctAnswer'],
       imageUrl: editImage,
       audioUrl: editAudio,
       ttsEnabled: editTtsEnabled,
@@ -87,26 +112,12 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
     });
     setIsEditing(false);
   };
-
-  /*
   const toggleCorrect = (opt: string) => {
     if (editCorrect.includes(opt)) {
       setEditCorrect(editCorrect.filter(o => o !== opt));
     } else {
       setEditCorrect([...editCorrect, opt]);
     }
-  };
-
-  const toggleCheckbox = (opt: string) => {
-    let current = tempAnswer ? tempAnswer.split(', ') : [];
-    if (current.includes(opt)) {
-      current = current.filter(o => o !== opt);
-    } else {
-      current = [...current, opt];
-    }
-    const newVal = current.join(', ');
-    setTempAnswer(newVal);
-    handleSave(newVal);
   };
 
   const addOption = () => {
@@ -126,7 +137,6 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
       setEditCorrect(editCorrect.map(c => c === oldVal ? val : c));
     }
   };
-  */
 
   /*
   const insertTag = (type: 'PT' | 'EN') => {
@@ -164,7 +174,63 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
                 className="admin-inline-input title"
               />
             </div>
-            {/* ... rest of the editor logic ... */}
+            {(editType === 'text' || editType === 'paragraph') && (
+              <div className="editor-row" style={{ marginTop: 12 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: '#64748b', marginBottom: 6 }}>
+                  Resposta correta / esperada (referência para correção — a aluna não vê)
+                </label>
+                <textarea
+                  className="admin-inline-input"
+                  rows={editType === 'paragraph' ? 4 : 2}
+                  value={editOpenCorrect}
+                  onChange={(e) => setEditOpenCorrect(e.target.value)}
+                  placeholder="Ex: spoon, colher (aceite várias linhas como respostas aceitáveis)"
+                  style={{ minHeight: editType === 'paragraph' ? 100 : 56 }}
+                />
+              </div>
+            )}
+            {(['mc', 'checkbox'] as QuestionType[]).includes(editType) && (
+              <div className="editor-row" style={{ marginTop: 12 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: '#64748b', marginBottom: 6 }}>
+                  Opções e resposta(s) correta(s)
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {editOpts.map((opt, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {editType === 'mc' ? (
+                        <input
+                          type="radio"
+                          name={`mc-correct-${index}`}
+                          checked={editCorrect.includes(opt)}
+                          onChange={() => setEditCorrect([opt])}
+                        />
+                      ) : (
+                        <input
+                          type="checkbox"
+                          checked={editCorrect.includes(opt)}
+                          onChange={() => toggleCorrect(opt)}
+                        />
+                      )}
+                      <input
+                        type="text"
+                        value={opt}
+                        onChange={(e) => updateOption(i, e.target.value)}
+                        className="admin-inline-input"
+                        style={{ flex: 1 }}
+                      />
+                      <button className="admin-cancel-btn" onClick={() => removeOption(i)} style={{ whiteSpace: 'nowrap' }}>
+                        Remover
+                      </button>
+                    </div>
+                  ))}
+                  <div>
+                    <button className="admin-add-btn" onClick={addOption} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <Plus size={14} /> Adicionar opção
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="editor-footer" style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
               <button className="admin-save-btn" onClick={handleConfirmEdit} style={{ background: currentColors.main, color: '#fff' }}>
                 <Check size={16} /> Aplicar Mudanças
@@ -277,6 +343,14 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
 
       {!isEditing && showMediatorGuide && (
         <div className="q-mediator-panel-v4">
+          {isAdmin && (question.type === 'text' || question.type === 'paragraph') && question.correctAnswer && (
+            <p className="admin-correct-ref-v4">
+              <strong>✓ Resposta de referência:</strong>{' '}
+              {typeof question.correctAnswer === 'string'
+                ? question.correctAnswer
+                : (question.correctAnswer as string[]).join(' · ')}
+            </p>
+          )}
           {question.mediator && <p><strong>💡 Mediação:</strong> {question.mediator}</p>}
           {question.hint && <p className="hint"><strong>✨ Dica Aluna:</strong> {question.hint}</p>}
         </div>

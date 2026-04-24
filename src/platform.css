@@ -854,6 +854,17 @@
     font-weight: 800;
   }
 
+  .admin-correct-ref-v4 {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: #065f46;
+    line-height: 1.5;
+  }
+
   .q-image-v4 {
     margin-bottom: 32px;
     border-radius: 24px;
@@ -1127,17 +1138,16 @@
   }
 
   .step-content-v4 {
-    height: 530px;
-    min-height: 530px;
-    max-height: 530px;
+    height: 500px;
+    min-height: 500px;
+    max-height: 500px;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
     overflow-x: hidden;
     padding: 8px 0 16px;
     background:
-      radial-gradient(circle at 15% 8%, rgba(56, 189, 248, 0.08) 0, rgba(56, 189, 248, 0) 36%),
-      radial-gradient(circle at 85% 25%, rgba(167, 139, 250, 0.09) 0, rgba(167, 139, 250, 0) 42%),
+      radial-gradient(circle at 15% 8%, rgba(56, 189, 248, 0.06) 0, rgba(56, 189, 248, 0) 36%),
       transparent;
   }
 
@@ -1206,6 +1216,13 @@
     flex-shrink: 0; /* Prevent the card from collapsing if it has short content */
   }
 
+  /* Slightly larger embed preview so a thumbnail/miniatura is visible
+     and to avoid empty purple background showing below the iframe. */
+  .step-card-v4.embed .iframe-responsive-v4 {
+    height: 320px; /* increased preview height to show miniatura */
+    max-height: 420px;
+  }
+
   .step-header-v4 {
     display: flex;
     align-items: center;
@@ -1224,12 +1241,144 @@
   .iframe-responsive-v4 {
     position: relative;
     width: 100%;
-    height: 100%; /* Perfectly fill the 360px container */
+    /* default fills available area, but embed preview in lesson cards is constrained
+       by the .step-card-v4.embed rule above (260px) */
+    height: 100%;
     border-radius: 20px;
     overflow: hidden;
     background: #f1f5f9;
     box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
   }
+
+  /* Embed preview visual (non-interactive) */
+  .embed-preview {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .embed-preview-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .embed-board {
+    display: flex;
+    gap: 12px;
+    width: 96%;
+    max-width: 1100px;
+    height: 86%;
+    background: linear-gradient(180deg, #f8fafc, #ffffff);
+    border-radius: 14px;
+    padding: 12px;
+    box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+    pointer-events: none; /* prevent interaction in preview */
+  }
+
+  .embed-thumbnail {
+    width: 96%;
+    max-width: 1100px;
+    height: 86%;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+    display: block;
+  }
+
+  .embed-col {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .embed-col-title {
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 14px;
+  }
+
+  .embed-card {
+    background: #eef2ff;
+    border-radius: 10px;
+    flex: 1 1 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #475569;
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  /* embed-fullscreen-btn removed — header fullscreen button opens preview modal */
+
+  /* Modal that contains the interactive iframe */
+  .embed-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.6);
+    padding: 20px;
+  }
+
+  .embed-modal-inner {
+    width: 100%;
+    max-width: 1280px;
+    height: 100%;
+    max-height: 900px;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+  }
+
+  .embed-modal-inner iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .embed-modal-close {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    z-index: 10;
+    background: rgba(255,255,255,0.9);
+    border: 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 900;
+  }
+
+  /* Overlay corners that cover small in-iframe controls (useful for cross-origin embeds).
+     These intentionally block clicks in the corner area to prevent accidental interaction
+     with embedded controls that cannot be removed from the parent. */
+  .embed-modal-inner .embed-overlay-corner {
+    position: absolute;
+    z-index: 9; /* above iframe, below modal close button (z-index:10) */
+    width: 120px;
+    height: 60px;
+    background: rgba(255,255,255,0.98);
+    pointer-events: auto;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(2,6,23,0.08);
+  }
+
+  .embed-modal-inner .embed-overlay-corner.top-right { top: 12px; right: 12px; }
+  .embed-modal-inner .embed-overlay-corner.bottom-right { bottom: 12px; right: 12px; }
 
   .iframe-responsive-v4 iframe {
     width: 100%;
@@ -1414,6 +1563,12 @@
     pointer-events: none;
     animation: bounce-left 0.9s ease-in-out infinite;
     white-space: nowrap;
+  }
+
+  /* Hide the small system fullscreen/restart button inside embed steps
+     so only the game's own control remains visible. */
+  .step-card-v4.embed .fullscreen-btn-v4 {
+    display: none;
   }
 
   .fullscreen-hint-arrow .hint-label {

@@ -143,7 +143,74 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
         <div className="editor-main-col">
           <section className="editor-section-card">
             <h3 className="section-title-v4">
-              <Target className="text-blue" size={20} /> Objetivos de Aprendizagem
+              <BookOpen className="text-blue" size={20} /> Guia de Estudo (Estudante & Mediadora)
+            </h3>
+            <p className="field-help">Este texto aparece na primeira etapa da aula. Descreva o que será aprendido.</p>
+            <textarea 
+              className="editor-textarea"
+              rows={5}
+              value={unitData.brief || ""}
+              onChange={(e) => setUnitData({...unitData, brief: e.target.value})}
+              placeholder="Ex: Hoje falaremos dos objetos e ações que acontecem na cozinha..."
+            />
+
+            <div style={{ marginTop: '24px' }}>
+              <h4 style={{ fontSize: '14px', fontWeight: 900, marginBottom: '12px', color: 'var(--ink2)' }}>Mídias Adicionais (Imagens, Vídeos ou HTML)</h4>
+              <p className="field-help">Cole links de imagens, vídeos do YouTube ou código HTML para exibir logo abaixo do texto.</p>
+              
+              <div className="embed-input-group">
+                <input 
+                  type="text" 
+                  className="editor-input-v4"
+                  placeholder="Link da imagem, vídeo ou código HTML..."
+                  id="new-brief-media"
+                />
+                <button
+                  onClick={() => {
+                    const input = document.getElementById('new-brief-media') as HTMLInputElement;
+                    const val = input.value.trim();
+                    if (!val) return;
+                    
+                    const isHtml = val.startsWith('<');
+                    const newMedia = { label: isHtml ? 'HTML' : 'media', url: val };
+                    const nextLinks = [...(unitData.external_links || []), newMedia];
+                    setUnitData({ ...unitData, external_links: nextLinks });
+                    input.value = '';
+                  }}
+                  className="embed-add-btn-v4"
+                >
+                  <Plus size={20} /> ADICIONAR
+                </button>
+              </div>
+
+              <div className="media-list-v4" style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {unitData.external_links?.filter((l: any) => l.label === 'media' || l.label === 'HTML').map((media: any, i: number) => (
+                  <div key={i} className="embed-item-v4" style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+                      <span style={{ fontSize: '10px', background: media.label === 'HTML' ? '#f59e0b' : '#3b82f6', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>{media.label}</span>
+                      <span style={{ fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{media.url}</span>
+                    </div>
+                    <button 
+                      className="embed-remove-btn" 
+                      onClick={() => {
+                        const next = unitData.external_links.filter((l: any, idx: number) => {
+                           const filtered = unitData.external_links.filter((item: any) => item.label === 'media' || item.label === 'HTML');
+                           return l !== filtered[idx];
+                        });
+                        setUnitData({ ...unitData, external_links: next });
+                      }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="editor-section-card">
+            <h3 className="section-title-v4">
+              <Target className="text-orange" size={20} /> Objetivos de Aprendizagem
             </h3>
             <textarea 
               className="editor-textarea"
@@ -156,7 +223,7 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
 
           <section className="editor-section-card">
             <h3 className="section-title-v4">
-              <Lightbulb className="text-orange" size={20} /> Encaminhamento Metodológico
+              <Lightbulb className="text-purple" size={20} /> Encaminhamento Metodológico
             </h3>
             <textarea 
               className="editor-textarea"
@@ -347,7 +414,8 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
                         }}
                       >
                         <option value="mc">Múltipla Escolha</option>
-                        <option value="text">Resposta Aberta</option>
+                        <option value="text">Resposta Aberta (curta)</option>
+                        <option value="paragraph">Resposta Aberta (longa)</option>
                         <option value="instruction">Somente Instrução</option>
                       </select>
                     </div>
@@ -379,6 +447,29 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
                           setUnitData({ ...unitData, questions: newQs });
                         }}
                         placeholder="Opção 1, Opção 2, Opção 3"
+                      />
+                    </div>
+                  )}
+
+                  {(q.type === 'text' || q.type === 'paragraph') && (
+                    <div className="q-field">
+                      <label>Resposta correta / esperada (referência — não aparece para a aluna)</label>
+                      <textarea
+                        rows={q.type === 'paragraph' ? 4 : 2}
+                        value={
+                          typeof q.correctAnswer === 'string'
+                            ? q.correctAnswer
+                            : Array.isArray(q.correctAnswer)
+                              ? q.correctAnswer.join('\n')
+                              : ''
+                        }
+                        onChange={(e) => {
+                          const newQs = [...unitData.questions];
+                          const raw = e.target.value;
+                          newQs[idx].correctAnswer = raw === '' ? undefined : raw;
+                          setUnitData({ ...unitData, questions: newQs });
+                        }}
+                        placeholder="Uma resposta por linha se quiser aceitar várias formas (ex.: spoon / colher)"
                       />
                     </div>
                   )}

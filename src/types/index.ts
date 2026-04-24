@@ -32,6 +32,7 @@ export interface Unit {
   plan_a?: string;
   wa?: string;
   embed_urls?: string[];
+  embed_preview_images?: string[];
   descriptors?: string[];
   questions: Question[];
   external_links?: ExternalLink[];

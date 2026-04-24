@@ -8,6 +8,7 @@ import {
   Maximize, Home, ChevronRight
 } from 'lucide-react';
 import { QuestionBlock } from './QuestionBlock';
+import EmbedPreview from '../ui/EmbedPreview';
 import { useAuth } from '../../context/AuthContext';
 import { useStudentJourney } from '../../hooks/useStudentJourney';
 import WordFallGame from './WordFallGame';
@@ -78,7 +79,7 @@ const normalizeEmbedUrl = (rawUrl: string): string => {
 const StepNavigation: React.FC<{
   unit: Unit;
   answers: Record<string, any>;
-  onSaveAnswer: (qIdx: number, val: string) => Promise<boolean>;
+  onSaveAnswer: (unitId: string, qIdx: number, val: string) => Promise<boolean>;
   isAdmin?: boolean;
   editQuestion: (idx: number, newQ: Question) => void;
   deleteQuestion: (idx: number) => void;
@@ -95,15 +96,11 @@ const StepNavigation: React.FC<{
   const [isSavingSession, setIsSavingSession] = useState(false);
   const [sessionSuccess, setSessionSuccess] = useState(false);
   const [stepReward, setStepReward] = useState(false);
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const [hintPos, setHintPos] = useState<{ top: number; left: number } | null>(null);
+  const [/*hintPos*/, /*setHintPos*/] = useState<null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const previewRef = React.useRef<any>(null);
 
-  useEffect(() => {
-    if (!isFirstUnit || !btnRef.current) return;
-    const rect = btnRef.current.getBoundingClientRect();
-    setHintPos({ top: rect.top + rect.height / 2 - 16, left: rect.right + 8 });
-  }, [isFirstUnit, activeStep]);
+  
 
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -219,20 +216,98 @@ const StepNavigation: React.FC<{
 
         {current.type === 'brief' && (
           <div className="step-card-v4 brief">
-            <div className="step-header-v4" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <Info size={24} style={{ color: currentColors.accent }} />
-                <h3>Guia de Estudo</h3>
+            <div className="step-body-v4 brief-text" style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              justifyContent: 'center', 
+              minHeight: '300px', 
+              textAlign: 'center', 
+              padding: '20px' 
+            }}>
+              <h2 style={{ color: '#5b7cff', fontSize: '32px', marginBottom: '24px', fontWeight: 900 }}>Guia de Estudo 📚</h2>
+              
+              {/* Text Content - Flexible sizing */}
+              <div style={{ flex: unit.external_links?.some(l => l.label === 'media' || l.label === 'HTML') ? '0 1 auto' : '1 1 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <p style={{ 
+                  color: '#64748b', 
+                  fontSize: unit.external_links?.length ? '18px' : '22px', 
+                  maxWidth: '700px', 
+                  margin: '0 auto', 
+                  lineHeight: '1.6', 
+                  whiteSpace: 'pre-wrap' 
+                }}>
+                  {unit.brief}
+                </p>
               </div>
-              {isAdmin && (
-                <button className="admin-btn-v4" onClick={() => {
-                  const val = window.prompt('Editar Guia da Mediadora:', unit.brief);
-                  if (val !== null) handleUpdateUnitContent({ brief: val });
-                }}><Edit2 size={16} /></button>
+
+              {/* Dynamic Media Section - Only occupies space if items exist */}
+              {unit.external_links?.some(l => l.label.toLowerCase() === 'media' || l.label === 'HTML') && (
+                <div className="brief-media-container" style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '24px', 
+                  alignItems: 'center', 
+                  marginTop: '40px',
+                  marginBottom: '20px',
+                  width: '100%'
+                }}>
+                  {unit.external_links.filter(l => l.label.toLowerCase() === 'media' || l.label === 'HTML').map((media, idx) => {
+                    const url = media.url;
+                    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                      const vidId = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url.split('/').pop();
+                      return (
+                        <div key={idx} style={{ width: '100%', maxWidth: '640px', aspectRatio: '16/9', boxShadow: '0 20px 40px rgba(0,0,0,0.1)', borderRadius: '20px', overflow: 'hidden' }}>
+                          <iframe width="100%" height="100%" src={`https://www.youtube.com/embed/${vidId}`} frameBorder="0" allowFullScreen></iframe>
+                        </div>
+                      );
+                    }
+                    if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i) || url.includes('ibb.co')) {
+                      return <img key={idx} src={url} alt="Media" style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '20px', boxShadow: '0 15px 35px rgba(0,0,0,0.1)' }} />;
+                    }
+                    if (media.label === 'HTML') {
+                      return <div key={idx} dangerouslySetInnerHTML={{ __html: url }} style={{ width: '100%' }} />;
+                    }
+                    return null;
+                  })}
+                </div>
               )}
-            </div>
-            <div className="step-body-v4 brief-text">
-              {unit.brief}
+
+              {/* Glossary (Specifically for Kitchen) */}
+              {(unit.title.toLowerCase().includes('cozinha') || unit.title.toLowerCase().includes('kitchen')) && (
+                 <div style={{ marginTop: '40px' }}>
+                   <div className="visual-glossary-v4" style={{ borderTop: 'none', marginTop: '0', justifyContent: 'center' }}>
+                      {[
+                        { id: 1, obj: 'Knife', img: 'https://i.ibb.co/9kNp5Fpz/knife.png' },
+                        { id: 2, obj: 'Pan', img: 'https://i.ibb.co/TMVCmd1s/pan.png' },
+                        { id: 3, obj: 'Cup', img: 'https://i.ibb.co/5pFpd9n/cup.png' },
+                        { id: 4, obj: 'Fridge', img: 'https://i.ibb.co/0ygCvPkQ/fridge.png' },
+                        { id: 5, obj: 'Spoon', img: 'https://i.ibb.co/v4Jjxfpv/spoon.png' }
+                      ].map(item => (
+                        <div key={item.id} className="glossary-card-v4" style={{ background: '#fff', border: '1px solid #eef2ff' }}>
+                          <img src={item.img} alt={item.obj} />
+                          <span style={{ fontSize: '15px' }}>{item.obj}</span>
+                        </div>
+                      ))}
+                   </div>
+                   
+                   <button 
+                     className="btn" 
+                     onClick={handleNext}
+                     style={{ 
+                       margin: '40px auto 0', 
+                       padding: '16px 40px', 
+                       fontSize: '22px', 
+                       background: 'linear-gradient(135deg, #7c3aed, #6366f1)',
+                       borderRadius: '20px',
+                       boxShadow: '0 10px 25px rgba(99, 102, 241, 0.3)',
+                       color: '#fff',
+                       fontWeight: 900
+                     }}
+                   >
+                     Começar Atividade ▶
+                   </button>
+                 </div>
+              )}
             </div>
           </div>
         )}
@@ -244,26 +319,7 @@ const StepNavigation: React.FC<{
                 <Sparkles size={24} style={{ color: currentColors.accent }} />
                 <h3>Atividade Interativa {(current as EmbedStep).idx + 1}</h3>
                 <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                                  <button 
-                    ref={btnRef}
-                    className="fullscreen-btn-v4" 
-                    onClick={() => {
-                      const el = document.getElementById(`embed-container-${(current as EmbedStep).idx}`);
-                      if (el?.requestFullscreen) el.requestFullscreen();
-                    }}
-                    title="Tela Cheia"
-                  >
-                    <Maximize size={18} />
-                  </button>
-                  {isFirstUnit && hintPos && (
-                    <div
-                      className="fullscreen-hint-arrow"
-                      style={{ top: hintPos.top, left: hintPos.left }}
-                    >
-                      <span className="hint-arrow">←</span>
-                      <span className="hint-label">Tela cheia</span>
-                    </div>
-                  )}
+                  {/* Small system fullscreen button removed; preview click and game's controls open fullscreen modal */}
                 </div>
               </div>
               {isAdmin && (
@@ -287,20 +343,14 @@ const StepNavigation: React.FC<{
               )}
             </div>
             <div className="iframe-responsive-v4" id={`embed-container-${(current as EmbedStep).idx}`} style={{ position: 'relative' }}>
-              {isFullscreen && (
-                <button
-                  className="exit-fullscreen-btn"
-                  onClick={() => document.exitFullscreen()}
-                  title="Sair da Tela Cheia"
-                >
-                  ✕ Sair
-                </button>
-              )}
-              <iframe
-                src={(current as EmbedStep).url}
-                allow="fullscreen; autoplay; clipboard-read; clipboard-write"
-                allowFullScreen
-                referrerPolicy="strict-origin-when-cross-origin"
+              {/* Preview (non-interactive) + fullscreen modal */}
+              {/* EmbedPreview handles opening an interactive iframe in a modal/fullscreen */}
+              {/* Lazy-load component to avoid SSR issues */}
+              <EmbedPreview
+                ref={previewRef}
+                url={(current as EmbedStep).url}
+                title={`Atividade ${(current as EmbedStep).idx + 1}`}
+                thumbnailUrl={unit.embed_preview_images?.[(current as EmbedStep).idx]}
               />
             </div>
           </div>
@@ -314,7 +364,7 @@ const StepNavigation: React.FC<{
             color={unit.color}
             isDone={!!answers[`${unit.id}-${(current as QuestionStep).idx}`]?.is_done}
             savedAnswer={answers[`${unit.id}-${(current as QuestionStep).idx}`]?.answer_value || ''}
-            onSaveAnswer={(val) => onSaveAnswer((current as QuestionStep).idx, val)}
+            onSaveAnswer={(val) => onSaveAnswer(unit.id, (current as QuestionStep).idx, val)}
             isAdmin={isAdmin}
             onEdit={(newQ) => editQuestion((current as QuestionStep).idx, newQ)}
             onDelete={() => deleteQuestion((current as QuestionStep).idx)}

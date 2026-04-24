@@ -208,9 +208,9 @@ const WordFallGame: React.FC<WordFallGameProps> = ({ unitId, onGameOver, onBack 
         {lives <= 0 && (
           <div className="game-overlay">
              <div className="game-over-card">
-                <h2>FIM DE JOGO!</h2>
-                <p>Você encontrou {wordsFound} palavras.</p>
-                <button onClick={startGame} className="restart-btn">TENTAR NOVAMENTE</button>
+               <h2>FIM DE JOGO!</h2>
+               <p>Você encontrou {wordsFound} palavras.</p>
+               {/* Small in-game restart removed per request; use the main Iniciar/Reiniciar control to restart */}
              </div>
           </div>
         )}
@@ -385,7 +385,7 @@ const WordFallGame: React.FC<WordFallGameProps> = ({ unitId, onGameOver, onBack 
         }
         .start-card h2, .game-over-card h2 { font-size: 36px; font-weight: 900; margin: 20px 0 10px; }
         .start-card p { color: #64748b; font-weight: 600; margin-bottom: 30px; }
-        .start-btn, .restart-btn {
+        .start-btn {
           width: 100%;
           padding: 20px;
           background: #2ECC71;

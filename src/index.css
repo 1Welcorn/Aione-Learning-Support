@@ -3752,3 +3752,42 @@ input,textarea,select{font-family:'DM Sans',sans-serif;font-size:16px;border-rad
 
 @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
+/* --- VISUAL GLOSSARY FOR KITCHEN UNIT --- */
+.visual-glossary-v4 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 2px dashed #eee;
+}
+
+.glossary-card-v4 {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+  transition: all 0.2s;
+  cursor: default;
+}
+
+.glossary-card-v4:hover {
+  transform: translateY(-4px);
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.glossary-card-v4 img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  margin-bottom: 8px;
+}
+
+.glossary-card-v4 span {
+  display: block;
+  font-weight: 800;
+  font-size: 16px;
+  color: #1e293b;
+}
