@@ -13,8 +13,8 @@ export const LessonCard: React.FC<LessonCardProps> = ({ lesson, onClick, idx }) 
   const isCurrent = lesson.status === 'not_started';
   const isCompleted = lesson.status === 'completed';
 
-  // Define qual imagem usar baseado no status
-  const displayIcon = isCompleted ? lesson.icon3D : lesson.iconOutline;
+  // Define qual imagem usar baseado no status: 3D para Concluído ou Atual, Outline apenas para Bloqueado
+  const displayIcon = (isCompleted || isCurrent) ? lesson.icon3D : lesson.iconOutline;
   const hasIcon = !!displayIcon;
 
   return (
