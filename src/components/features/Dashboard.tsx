@@ -83,13 +83,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
           const isDone = unit.unit_status === 'completed';
           const isLocked = idx > 0 && units[idx-1].unit_status !== 'completed';
           
+          const t = (unit.unit_sub || unit.unit_title || '').toLowerCase();
+          let base = '';
+          if (t.includes('cozinha')) base = 'Aula 1 Vocabulário da Cozinha';
+          else if (t.includes('oral') || t.includes('escuta')) base = 'Aula 2 Compreensão Oral';
+          else if (t.includes('apresentação')) base = 'Aula 3 Apresentação Pessoal';
+          else if (t.includes('cotidiano')) base = 'Aula 4 Inglês no Cotidiano';
+          else if (t.includes('digitais')) base = 'Aula 5 Gêneros Digitais';
+          else if (t.includes('receita')) base = 'Aula 6 Receita';
+          else if (t.includes('cores')) base = 'Aula 7 Cores e Frutas';
+          else if (t.includes('números')) base = 'Aula 8 Números e Quantidade';
+
           // Map Unit to Lesson interface
           const lessonData: Lesson = {
             id: unit.unit_id,
             title: unit.unit_sub || unit.unit_title,
             status: isDone ? 'completed' : (isLocked ? 'locked' : 'not_started'),
-            iconOutline: `/unit-icons/${unit.unit_title}-não iniciada.png`, // Defaulting to naming convention
-            icon3D: `/unit-icons/${unit.unit_title}.png`,
+            iconOutline: base ? `/unit-icons/${base}-não iniciada.png` : '',
+            icon3D: base ? `/unit-icons/${base}.png` : '',
             xpValue: 100
           };
 

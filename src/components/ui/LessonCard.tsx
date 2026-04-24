@@ -15,6 +15,7 @@ export const LessonCard: React.FC<LessonCardProps> = ({ lesson, onClick, idx }) 
 
   // Define qual imagem usar baseado no status
   const displayIcon = isCompleted ? lesson.icon3D : lesson.iconOutline;
+  const hasIcon = !!displayIcon;
 
   return (
     <motion.div
@@ -23,17 +24,22 @@ export const LessonCard: React.FC<LessonCardProps> = ({ lesson, onClick, idx }) 
       onClick={onClick}
     >
       <div className="lesson-icon-v5">
-        <img 
-          src={displayIcon} 
-          alt={lesson.title}
-          className={isCompleted ? 'animate-pop' : 'grayscale-soft'}
-          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-          onError={(e) => {
-             // Fallback to a default if image fails
-             (e.target as any).style.display = 'none';
-             (e.target as any).parentElement.innerHTML = '<span style="font-size: 32px">📚</span>';
-          }}
-        />
+        {hasIcon ? (
+          <img 
+            src={displayIcon} 
+            alt={lesson.title}
+            className={isCompleted ? 'animate-pop' : 'grayscale-soft'}
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            onError={(e) => {
+               (e.target as any).style.display = 'none';
+               (e.target as any).parentElement.innerHTML = '<span style="font-size: 32px">📚</span>';
+            }}
+          />
+        ) : (
+          <span style={{ fontSize: '32px' }}>
+            {lesson.status === 'completed' ? '🌟' : (isLocked ? '🔒' : '📚')}
+          </span>
+        )}
       </div>
       
       <span className="lesson-id-tag">Aula {idx + 1}</span>
