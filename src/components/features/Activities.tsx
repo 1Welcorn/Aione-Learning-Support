@@ -97,6 +97,7 @@ const StepNavigation: React.FC<{
   const [sessionSuccess, setSessionSuccess] = useState(false);
   const [isEditingBrief, setIsEditingBrief] = useState(false);
   const [tempBrief, setTempBrief] = useState(unit.brief || '');
+  const [tempLinks, setTempLinks] = useState<any[]>([]);
   const [stepReward, setStepReward] = useState(false);
   const [/*hintPos*/, /*setHintPos*/] = useState<null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -226,6 +227,7 @@ const StepNavigation: React.FC<{
                   className="admin-edit-brief-btn"
                   onClick={() => {
                     setTempBrief(unit.brief || '');
+                    setTempLinks(unit.external_links ? [...unit.external_links] : []);
                     setIsEditingBrief(true);
                   }}
                   style={{
@@ -296,13 +298,72 @@ const StepNavigation: React.FC<{
                       </button>
                       <button 
                         onClick={async () => {
-                          const success = await handleUpdateUnitContent({ brief: tempBrief });
+                          const success = await handleUpdateUnitContent({ 
+                            brief: tempBrief,
+                            external_links: tempLinks
+                          });
                           if (success) setIsEditingBrief(false);
                         }}
                         style={{ padding: '10px 24px', borderRadius: '12px', border: 'none', background: '#5b7cff', color: '#fff', fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 12px rgba(91, 124, 255, 0.2)' }}
                       >
-                        Salvar Alterações
+                        Salvar Todas as Mudanças
                       </button>
+                    </div>
+
+                    <div style={{ marginTop: '32px', textAlign: 'left', background: '#f8fafc', padding: '24px', borderRadius: '20px', border: '1px solid #e2e8f0' }}>
+                       <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: 900, color: '#475569', textTransform: 'uppercase' }}>Gerenciar Mídias do Guia</h4>
+                       
+                       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+                          <input 
+                            type="text" 
+                            id="inline-add-media"
+                            placeholder="Cole link de imagem, YouTube ou HTML..."
+                            style={{ flex: 1, padding: '12px 16px', borderRadius: '12px', border: '1px solid #cbd5e1', outline: 'none' }}
+                            onKeyDown={(e) => {
+                               if (e.key === 'Enter') {
+                                  const val = (e.target as HTMLInputElement).value.trim();
+                                  if (!val) return;
+                                  const isHtml = val.startsWith('<');
+                                  setTempLinks([...tempLinks, { label: isHtml ? 'HTML' : 'media', url: val }]);
+                                  (e.target as HTMLInputElement).value = '';
+                               }
+                            }}
+                          />
+                          <button 
+                            onClick={() => {
+                               const input = document.getElementById('inline-add-media') as HTMLInputElement;
+                               const val = input.value.trim();
+                               if (!val) return;
+                               const isHtml = val.startsWith('<');
+                               setTempLinks([...tempLinks, { label: isHtml ? 'HTML' : 'media', url: val }]);
+                               input.value = '';
+                            }}
+                            style={{ background: '#1e293b', color: '#fff', border: 'none', padding: '0 20px', borderRadius: '12px', fontWeight: 800, cursor: 'pointer' }}
+                          >
+                            + ADICIONAR
+                          </button>
+                       </div>
+
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {tempLinks.filter(l => l.label === 'media' || l.label === 'HTML').map((link, idx) => (
+                             <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', padding: '10px 16px', borderRadius: '12px', border: '1px solid #edf2f7' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+                                   <span style={{ fontSize: '10px', background: link.label === 'HTML' ? '#f59e0b' : '#3b82f6', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontWeight: 900 }}>{link.label}</span>
+                                   <span style={{ fontSize: '12px', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{link.url}</span>
+                                </div>
+                                <button 
+                                  onClick={() => setTempLinks(tempLinks.filter((_, i) => {
+                                     const filtered = tempLinks.filter(item => item.label === 'media' || item.label === 'HTML');
+                                     const target = filtered[idx];
+                                     return tempLinks[i] !== target;
+                                  }))}
+                                  style={{ background: '#fff1f2', color: '#e11d48', border: 'none', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}
+                                >
+                                   <Trash2 size={14} />
+                                </button>
+                             </div>
+                          ))}
+                       </div>
                     </div>
                   </div>
                 ) : (
