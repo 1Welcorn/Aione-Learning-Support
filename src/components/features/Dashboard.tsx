@@ -43,7 +43,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   if (journeyLoading || statsLoading) return <div className="screen-loading">Carregando sua jornada...</div>;
 
   return (
-    <div className="dash-v5-container" style={{ paddingTop: '20px' }}>
+    <div className="dash-v5-container">
       {/* Header de Status do Aluno (Design Premium) */}
       <header className="dash-v5-header" style={{ minHeight: '100px', alignItems: 'center', paddingTop: '10px' }}>
         <div className="dash-v5-profile" style={{ display: 'flex', alignItems: 'center', gap: '20px', overflow: 'visible' }}>
@@ -105,10 +105,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </header>
 
       {/* Título do Módulo */}
-      <div className="module-intro-v5" style={{ textAlign: 'center', marginBottom: '40px' }}>
+      <div className="module-intro-v5" style={{ textAlign: 'center', marginBottom: '20px' }}>
          <span className="module-tag-v5" style={{ background: '#ccfbf1', color: '#0f766e', padding: '6px 16px', borderRadius: '20px', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase' }}>JORNADA</span>
-         <h2 className="module-title-v5" style={{ fontSize: '28px', fontWeight: 900, color: '#1e293b', margin: '12px 0 8px' }}>Mission: Módulo 1 — Primeiros Passos</h2>
-         <p className="module-desc-v5" style={{ color: '#64748b', fontWeight: 600 }}>Complete as 12 aulas para ganhar o troféu de bronze!</p>
+         <h2 className="module-title-v5" style={{ fontSize: '26px', fontWeight: 900, color: '#1e293b', margin: '8px 0 4px' }}>Mission: Módulo 1 — Primeiros Passos</h2>
+         <p className="module-desc-v5" style={{ color: '#64748b', fontWeight: 600, fontSize: '14px' }}>Complete as 12 aulas para ganhar o troféu de bronze!</p>
       </div>
 
       {/* Grid de Aulas (Trilha com Pontilhado) */}

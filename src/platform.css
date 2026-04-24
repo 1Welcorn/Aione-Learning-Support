@@ -2009,7 +2009,7 @@
     align-items: center;
     box-shadow: 0 4px 20px rgba(0,0,0,0.03);
     border: 1px solid #f1f5f9;
-    margin-bottom: 32px;
+    margin-bottom: 16px;
   }
 
   .stat-badge-v5 {
@@ -2050,9 +2050,9 @@
   /* Trail Pattern Improvements */
   .trail-grid-v5 {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 40px;
-    padding: 60px 40px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 30px;
+    padding: 30px 40px;
     position: relative;
     background-image: radial-gradient(#cbd5e1 2px, transparent 2px);
     background-size: 40px 40px;
