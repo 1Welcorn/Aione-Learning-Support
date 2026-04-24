@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lesson } from '../../types';
+import type { Lesson } from '../../types/index';
 import { motion } from 'framer-motion';
 
 interface LessonCardProps {

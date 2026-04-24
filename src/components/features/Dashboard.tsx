@@ -9,7 +9,7 @@ import { useStudentJourney } from '../../hooks/useStudentJourney';
 import { useDashboardData } from '../../hooks/useDashboardData';
 import { COLORS } from '../../constants';
 import { LessonCard } from '../ui/LessonCard';
-import { Lesson } from '../../types';
+import type { Lesson } from '../../types/index';
 
 interface DashboardProps {
   onNavigate: (screen: string, unitId?: string) => void;
