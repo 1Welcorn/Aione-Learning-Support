@@ -363,28 +363,7 @@ const StepNavigation: React.FC<{
               )}
 
               {/* Action Button */}
-              <button 
-                className="btn" 
-                onClick={handleNext}
-                style={{ 
-                  margin: '32px auto 0', 
-                  padding: '16px 40px', 
-                  fontSize: '18px', 
-                  background: 'linear-gradient(135deg, #5b7cff, #7c3aed)',
-                  borderRadius: '20px',
-                  boxShadow: '0 8px 20px rgba(91, 124, 255, 0.3)',
-                  color: '#fff',
-                  fontWeight: 900,
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                Começar a Aula <ChevronRight size={22} />
-              </button>
+              {/* Botão removido por ser redundante com a navegação inferior */}
             </div>
           </div>
         )}
