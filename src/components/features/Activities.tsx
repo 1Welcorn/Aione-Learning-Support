@@ -5,7 +5,7 @@ import {
   Sparkles, Plus, FileText, ChevronDown, 
   Trash2, X, Info, Edit2,
   ChefHat, Headphones, User, Building2, Smartphone, BookOpen, GraduationCap,
-  Maximize, Home, ChevronRight
+  Maximize, Home, ChevronRight, ArrowLeft
 } from 'lucide-react';
 import { QuestionBlock } from './QuestionBlock';
 import EmbedPreview from '../ui/EmbedPreview';
@@ -404,8 +404,44 @@ const StepNavigation: React.FC<{
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <Sparkles size={24} style={{ color: currentColors.accent }} />
                 <h3>Atividade Interativa {(current as EmbedStep).idx + 1}</h3>
-                <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                  {/* Small system fullscreen button removed; preview click and game's controls open fullscreen modal */}
+                <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <button 
+                    onClick={() => previewRef.current?.open()}
+                    style={{
+                      background: '#f1f5f9',
+                      border: '1.5px solid #ff4d4d',
+                      borderRadius: '12px',
+                      width: '44px',
+                      height: '44px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      color: '#ff4d4d'
+                    }}
+                  >
+                    <Maximize size={20} />
+                  </button>
+                  
+                  <button 
+                    onClick={() => previewRef.current?.open()}
+                    style={{
+                      background: 'white',
+                      border: '1.5px solid #ff4d4d',
+                      borderRadius: '30px',
+                      padding: '0 20px',
+                      height: '44px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      cursor: 'pointer',
+                      color: '#ff4d4d',
+                      fontWeight: 900,
+                      fontSize: '16px'
+                    }}
+                  >
+                    <ArrowLeft size={18} /> Tela cheia
+                  </button>
                 </div>
               </div>
               {isAdmin && (
