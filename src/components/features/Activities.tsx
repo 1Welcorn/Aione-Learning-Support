@@ -180,464 +180,208 @@ const StepNavigation: React.FC<{
   };
 
   return (
-    <div className="step-nav-v4">
-      {/* Progress Bar Top */}
-      <div className="step-progress-v4">
-        <div className="step-progress-track">
-          <div 
-            className="step-progress-fill" 
-            style={{ width: `${(activeStep / (steps.length - 1)) * 100}%`, background: currentColors.accent }}
-          />
-        </div>
-        <div className="step-counter-v4">
-          ETAPA {activeStep + 1} DE {steps.length}
-        </div>
+    <div className="activities-v5-wrapper">
+      {/* Immersive Top Progress */}
+      <div className="activities-v5-header">
+         <button className="back-btn-v5" onClick={onToggle}>
+            <ArrowLeft size={20} />
+            Sair da Aula
+         </button>
+         
+         <div className="progress-segments-v5">
+            {steps.map((_, i) => (
+               <div 
+                  key={i} 
+                  className={`segment-v5 ${i === activeStep ? 'active' : ''} ${i < activeStep ? 'done' : ''}`}
+               />
+            ))}
+         </div>
+
+         <div className="unit-badge-v5">
+            {unit.title}
+         </div>
       </div>
 
-      <div className="step-content-v4">
-        {/* Banner removido a pedido do usuário para ganhar espaço */}
+      {/* Main Content Area */}
+      <div className="activities-v5-main">
+        <div className="step-container-v5">
+          {current.type === 'game' && (
+            <div className="step-card-v5 game-launcher">
+               <div className="game-visual-v5">🎮</div>
+               <h2>Desafio de Palavras</h2>
+               <p>Ganhe XP extra praticando o vocabulário desta lição!</p>
+               <button className="play-btn-v5" onClick={onStartGame} style={{ background: currentColors.accent }}>
+                  Começar Desafio!
+               </button>
+            </div>
+          )}
 
-        {current.type === 'game' && (
-          <div className="game-launcher-card-v4" onClick={onStartGame} style={{ background: currentColors.light }}>
-             <div className="game-icon-v4">🎮</div>
-             <div className="game-info-v4">
-                <h4 style={{ color: currentColors.dark }}>DESAFIO WORD FALL!</h4>
-                <p>Pratique as palavras desta lição e ganhe estrelas!</p>
-             </div>
-             <button className="play-game-btn-v4" style={{ background: currentColors.accent }}>JOGAR AGORA!</button>
-          </div>
-        )}
-
-        {current.type === 'brief' && (
-          <div className="step-card-v4 brief">
-            <div className="step-body-v4 brief-text" style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              justifyContent: 'center', 
-              minHeight: '250px', 
-              textAlign: 'center', 
-              padding: '24px',
-              position: 'relative',
-              background: 'linear-gradient(180deg, #ffffff 0%, #f8faff 100%)',
-              borderRadius: '24px'
-            }}>
-              {/* Admin Edit Button */}
-              {isAdmin && (
-                <button 
-                  className="admin-edit-brief-btn"
-                  onClick={() => {
-                    setTempBrief(unit.brief || '');
-                    setTempLinks(unit.external_links ? [...unit.external_links] : []);
-                    setIsEditingBrief(true);
-                  }}
-                  style={{
-                    position: 'absolute',
-                    top: '20px',
-                    right: '20px',
-                    background: isEditingBrief ? '#f1f5f9' : '#fff',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '50%',
-                    width: '40px',
-                    height: '40px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                    color: '#64748b',
-                    zIndex: 10
-                  }}
-                >
-                  <Edit2 size={18} />
-                </button>
-              )}
-
-              <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                <div style={{ background: '#eef2ff', padding: '8px', borderRadius: '10px', color: '#5b7cff' }}>
-                  <Info size={24} />
+          {current.type === 'brief' && (
+            <div className="step-card-v5 brief">
+              <div className="brief-header-v5">
+                <div className="brief-mascot-v5">
+                   <img src="https://i.ibb.co/PZNCmrTf/Captura-de-tela-2026-04-24-002158.png" alt="Explorer" />
                 </div>
-                <h2 style={{ color: '#1e293b', fontSize: '28px', margin: 0, fontWeight: 900 }}>Guia de Estudo</h2>
+                <div className="brief-text-v5">
+                   <span className="step-label-v5">ETAPA 1: PREPARAÇÃO</span>
+                   <h2>Guia de Estudo</h2>
+                </div>
               </div>
-              
-              {/* Text Content - Smart Sizing / Inline Editor */}
-              <div style={{ 
-                flex: unit.external_links?.some(l => l.label.toLowerCase() === 'media' || l.label === 'HTML') ? '0 1 auto' : '1 1 auto', 
-                display: 'flex', 
-                flexDirection: 'column',
-                alignItems: 'center', 
-                justifyContent: 'center',
-                width: '100%'
-              }}>
+
+              <div className="brief-content-v5">
+                {isAdmin && (
+                  <button className="admin-edit-btn" onClick={() => setIsEditingBrief(!isEditingBrief)}>
+                    {isEditingBrief ? 'X Cancelar' : '✎ Editar Conteúdo'}
+                  </button>
+                )}
+
                 {isEditingBrief ? (
-                  <div style={{ width: '100%', maxWidth: '850px', position: 'relative' }}>
+                  <div className="brief-editor-v5">
                     <textarea 
                       value={tempBrief}
                       onChange={(e) => setTempBrief(e.target.value)}
-                      style={{
-                        width: '100%',
-                        minHeight: '200px',
-                        padding: '24px',
-                        fontSize: '20px',
-                        borderRadius: '20px',
-                        border: '2px solid #5b7cff',
-                        outline: 'none',
-                        color: '#1e293b',
-                        background: '#fff',
-                        lineHeight: '1.5',
-                        boxShadow: '0 10px 30px rgba(91, 124, 255, 0.1)',
-                        resize: 'vertical'
-                      }}
+                      className="brief-textarea-v5"
                       autoFocus
                     />
-                    <div style={{ display: 'flex', gap: '12px', marginTop: '16px', justifyContent: 'flex-end' }}>
-                      <button 
-                        onClick={() => setIsEditingBrief(false)}
-                        style={{ padding: '10px 24px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#fff', fontWeight: 800, cursor: 'pointer' }}
-                      >
-                        Cancelar
-                      </button>
-                      <button 
-                        onClick={async () => {
-                          const success = await handleUpdateUnitContent({ 
-                            brief: tempBrief,
-                            external_links: tempLinks
-                          });
-                          if (success) setIsEditingBrief(false);
-                        }}
-                        style={{ padding: '10px 24px', borderRadius: '12px', border: 'none', background: '#5b7cff', color: '#fff', fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 12px rgba(91, 124, 255, 0.2)' }}
-                      >
-                        Salvar Todas as Mudanças
-                      </button>
-                    </div>
-
-                    <div style={{ marginTop: '32px', textAlign: 'left', background: '#f8fafc', padding: '24px', borderRadius: '20px', border: '1px solid #e2e8f0' }}>
-                       <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: 900, color: '#475569', textTransform: 'uppercase' }}>Gerenciar Mídias do Guia</h4>
-                       
-                       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-                          <input 
-                            type="text" 
-                            id="inline-add-media"
-                            placeholder="Cole link de imagem, YouTube ou HTML..."
-                            style={{ flex: 1, padding: '12px 16px', borderRadius: '12px', border: '1px solid #cbd5e1', outline: 'none' }}
-                            onKeyDown={(e) => {
-                               if (e.key === 'Enter') {
-                                  const val = (e.target as HTMLInputElement).value.trim();
-                                  if (!val) return;
-                                  const isHtml = val.startsWith('<');
-                                  setTempLinks([...tempLinks, { label: isHtml ? 'HTML' : 'media', url: val }]);
-                                  (e.target as HTMLInputElement).value = '';
-                               }
-                            }}
-                          />
-                          <button 
-                            onClick={() => {
-                               const input = document.getElementById('inline-add-media') as HTMLInputElement;
-                               const val = input.value.trim();
-                               if (!val) return;
-                               const isHtml = val.startsWith('<');
-                               setTempLinks([...tempLinks, { label: isHtml ? 'HTML' : 'media', url: val }]);
-                               input.value = '';
-                            }}
-                            style={{ background: '#1e293b', color: '#fff', border: 'none', padding: '0 20px', borderRadius: '12px', fontWeight: 800, cursor: 'pointer' }}
-                          >
-                            + ADICIONAR
-                          </button>
-                       </div>
-
-                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {tempLinks.filter(l => l.label === 'media' || l.label === 'HTML').map((link, idx) => (
-                             <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', padding: '10px 16px', borderRadius: '12px', border: '1px solid #edf2f7' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
-                                   <span style={{ fontSize: '10px', background: link.label === 'HTML' ? '#f59e0b' : '#3b82f6', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontWeight: 900 }}>{link.label}</span>
-                                   <span style={{ fontSize: '12px', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{link.url}</span>
-                                </div>
-                                <button 
-                                  onClick={() => setTempLinks(tempLinks.filter((_, i) => {
-                                     const filtered = tempLinks.filter(item => item.label === 'media' || item.label === 'HTML');
-                                     const target = filtered[idx];
-                                     return tempLinks[i] !== target;
-                                  }))}
-                                  style={{ background: '#fff1f2', color: '#e11d48', border: 'none', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}
-                                >
-                                   <Trash2 size={14} />
-                                </button>
-                             </div>
-                          ))}
-                       </div>
-                    </div>
+                    <button 
+                      className="save-btn-v5"
+                      onClick={async () => {
+                        const success = await handleUpdateUnitContent({ brief: tempBrief, external_links: tempLinks });
+                        if (success) setIsEditingBrief(false);
+                      }}
+                    >
+                      Salvar Tudo
+                    </button>
                   </div>
                 ) : (
-                  <p style={{ 
-                    color: '#475569', 
-                    fontSize: unit.external_links?.some(l => l.label.toLowerCase() === 'media' || l.label === 'HTML') ? '18px' : '24px', 
-                    maxWidth: '850px', 
-                    margin: '0 auto', 
-                    lineHeight: '1.5', 
-                    whiteSpace: 'pre-wrap',
-                    fontWeight: unit.external_links?.some(l => l.label.toLowerCase() === 'media' || l.label === 'HTML') ? 500 : 700,
-                    transition: 'all 0.3s ease'
-                  }}>
-                    {unit.brief}
-                  </p>
+                  <div className="brief-view-v5">
+                     <p className="brief-paragraph-v5">{unit.brief}</p>
+                     
+                     <div className="media-grid-v5">
+                        {unit.external_links?.filter(l => l.label === 'media' || l.label === 'HTML').map((media, idx) => (
+                           <div key={idx} className="media-item-v5">
+                              {media.url.includes('youtube.com') ? (
+                                 <iframe src={media.url.replace('watch?v=', 'embed/')} frameBorder="0" allowFullScreen />
+                              ) : media.label === 'HTML' ? (
+                                 <div dangerouslySetInnerHTML={{ __html: media.url }} />
+                              ) : (
+                                 <img src={media.url} alt="Reference" />
+                              )}
+                           </div>
+                        ))}
+                     </div>
+                  </div>
                 )}
               </div>
-
-              {/* Dynamic Media Section */}
-              {unit.external_links?.some(l => l.label.toLowerCase() === 'media' || l.label === 'HTML') && (
-                <div className="brief-media-container" style={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  gap: '24px', 
-                  alignItems: 'center', 
-                  marginTop: '24px',
-                  width: '100%'
-                }}>
-                  {unit.external_links.filter(l => l.label.toLowerCase() === 'media' || l.label === 'HTML').map((media, idx) => {
-                    const url = media.url;
-                    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                      const vidId = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url.split('/').pop();
-                      return (
-                        <div key={idx} style={{ 
-                          width: '100%', 
-                          maxWidth: '700px', 
-                          aspectRatio: '16/9', 
-                          boxShadow: '0 20px 40px -10px rgba(0,0,0,0.2)', 
-                          borderRadius: '20px', 
-                          overflow: 'hidden',
-                          border: '3px solid #fff'
-                        }}>
-                          <iframe width="100%" height="100%" src={`https://www.youtube.com/embed/${vidId}`} frameBorder="0" allowFullScreen></iframe>
-                        </div>
-                      );
-                    }
-                    if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i) || url.includes('ibb.co')) {
-                      return (
-                        <div key={idx} style={{ position: 'relative', width: '100%', maxWidth: '700px' }}>
-                          <img 
-                            src={url} 
-                            alt="Media" 
-                            style={{ 
-                              width: '100%', 
-                              height: 'auto', 
-                              borderRadius: '20px', 
-                              boxShadow: '0 15px 30px rgba(0,0,0,0.1)',
-                              border: '3px solid #fff'
-                            }} 
-                          />
-                        </div>
-                      );
-                    }
-                    if (media.label === 'HTML') {
-                      return <div key={idx} dangerouslySetInnerHTML={{ __html: url }} style={{ width: '100%', maxWidth: '900px' }} />;
-                    }
-                    return null;
-                  })}
-                </div>
-              )}
-
-              {/* Glossary (Specifically for Kitchen) */}
-              {(unit.title.toLowerCase().includes('cozinha') || unit.title.toLowerCase().includes('kitchen')) && (
-                 <div style={{ marginTop: '60px', width: '100%' }}>
-                   <div className="visual-glossary-v4" style={{ 
-                     borderTop: '1px solid #e2e8f0', 
-                     marginTop: '0', 
-                     paddingTop: '40px',
-                     justifyContent: 'center',
-                     gap: '24px'
-                   }}>
-                      {[
-                        { id: 1, obj: 'Knife', img: 'https://i.ibb.co/9kNp5Fpz/knife.png' },
-                        { id: 2, obj: 'Pan', img: 'https://i.ibb.co/TMVCmd1s/pan.png' },
-                        { id: 3, obj: 'Cup', img: 'https://i.ibb.co/5pFpd9n/cup.png' },
-                        { id: 4, obj: 'Fridge', img: 'https://i.ibb.co/0ygCvPkQ/fridge.png' },
-                        { id: 5, obj: 'Spoon', img: 'https://i.ibb.co/v4Jjxfpv/spoon.png' }
-                      ].map(item => (
-                        <div key={item.id} className="glossary-card-v4" style={{ 
-                          background: '#fff', 
-                          border: '1px solid #eef2ff',
-                          padding: '16px',
-                          borderRadius: '20px',
-                          boxShadow: '0 8px 16px rgba(0,0,0,0.04)',
-                          width: '120px'
-                        }}>
-                          <img src={item.img} alt={item.obj} style={{ width: '60px', height: '60px', marginBottom: '8px' }} />
-                          <span style={{ fontSize: '14px', fontWeight: 800 }}>{item.obj}</span>
-                        </div>
-                      ))}
-                   </div>
-                 </div>
-              )}
-
-              {/* Action Button */}
-              {/* Botão removido por ser redundante com a navegação inferior */}
             </div>
-          </div>
-        )}
+          )}
 
-        {current.type === 'embed' && (
-          <div className="step-card-v4 embed">
-            <div className="step-header-v4" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <Sparkles size={24} style={{ color: currentColors.accent }} />
-                <h3>Atividade Interativa {(current as EmbedStep).idx + 1}</h3>
-                <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                  <button 
-                    onClick={() => previewRef.current?.open()}
-                    style={{
-                      background: '#f1f5f9',
-                      border: '1.5px solid #ff4d4d',
-                      borderRadius: '12px',
-                      width: '44px',
-                      height: '44px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      color: '#ff4d4d'
-                    }}
-                  >
-                    <Maximize size={20} />
+          {current.type === 'embed' && (
+            <div className="step-card-v5 embed">
+               <div className="embed-header-v5">
+                  <div className="embed-info-v5">
+                     <span className="step-label-v5">ATIVIDADE INTERATIVA</span>
+                     <h2>Mão na Massa!</h2>
+                  </div>
+                  <button className="fullscreen-btn-v5" onClick={() => previewRef.current?.open()}>
+                     <Maximize size={18} />
+                     Tela Cheia
                   </button>
-                  
-                  <button 
-                    onClick={() => previewRef.current?.open()}
-                    style={{
-                      background: 'white',
-                      border: '1.5px solid #ff4d4d',
-                      borderRadius: '30px',
-                      padding: '0 20px',
-                      height: '44px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      cursor: 'pointer',
-                      color: '#ff4d4d',
-                      fontWeight: 900,
-                      fontSize: '16px'
-                    }}
-                  >
-                    <ArrowLeft size={18} /> Tela cheia
-                  </button>
-                </div>
-              </div>
-              {isAdmin && (
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button className="admin-btn-v4" onClick={() => {
-                    const val = window.prompt('Editar Link da Atividade:', (current as EmbedStep).url);
-                    if (val !== null) {
-                      const next = [...(unit.embed_urls || [])];
-                      next[(current as EmbedStep).idx] = val;
-                      handleUpdateUnitContent({ embed_urls: next });
-                    }
-                  }}><Edit2 size={16} /></button>
-                  <button className="admin-btn-v4 del" onClick={() => {
-                    if (window.confirm('Excluir esta atividade?')) {
-                      const next = [...(unit.embed_urls || [])];
-                      next.splice((current as EmbedStep).idx, 1);
-                      handleUpdateUnitContent({ embed_urls: next });
-                    }
-                  }}><Trash2 size={16} /></button>
-                </div>
-              )}
+               </div>
+               
+               <div className="embed-container-v5">
+                  <EmbedPreview
+                    ref={previewRef}
+                    url={(current as EmbedStep).url}
+                    title={`Atividade ${(current as EmbedStep).idx + 1}`}
+                    thumbnailUrl={unit.embed_preview_images?.[(current as EmbedStep).idx]}
+                  />
+               </div>
             </div>
-            <div className="iframe-responsive-v4" id={`embed-container-${(current as EmbedStep).idx}`} style={{ position: 'relative' }}>
-              {/* Preview (non-interactive) + fullscreen modal */}
-              {/* EmbedPreview handles opening an interactive iframe in a modal/fullscreen */}
-              {/* Lazy-load component to avoid SSR issues */}
-              <EmbedPreview
-                ref={previewRef}
-                url={(current as EmbedStep).url}
-                title={`Atividade ${(current as EmbedStep).idx + 1}`}
-                thumbnailUrl={unit.embed_preview_images?.[(current as EmbedStep).idx]}
+          )}
+
+          {current.type === 'question' && (
+            <div className="step-card-v5 question-step">
+               <QuestionBlock 
+                question={(current as QuestionStep).q}
+                index={(current as QuestionStep).idx}
+                unitId={unit.id}
+                color={unit.color}
+                isDone={!!answers[`${unit.id}-${(current as QuestionStep).idx}`]?.is_done}
+                savedAnswer={answers[`${unit.id}-${(current as QuestionStep).idx}`]?.answer_value || ''}
+                onSaveAnswer={(val) => onSaveAnswer((current as QuestionStep).idx, val)}
+                isAdmin={isAdmin}
+                onEdit={(newQ) => editQuestion((current as QuestionStep).idx, newQ)}
+                onDelete={() => deleteQuestion((current as QuestionStep).idx)}
+                isNew={(current as QuestionStep).q.q === 'Nova Pergunta'}
               />
+              {isAdmin && (
+                <button className="admin-add-item-v5" onClick={() => {
+                  const type = window.confirm('Adicionar QUESTÃO?') ? 'q' : 'e';
+                  if (type === 'q') {
+                    const newQ: Question = { q: 'Nova Pergunta', type: 'mc', opts: ['Opção 1'], mediator: '', hint: '' };
+                    handleUpdateUnitContent({ questions: [...unit.questions, newQ] });
+                  }
+                }}>+ Adicionar Questão</button>
+              )}
             </div>
-          </div>
-        )}
+          )}
 
-        {current.type === 'question' && (
-          <QuestionBlock 
-            question={(current as QuestionStep).q}
-            index={(current as QuestionStep).idx}
-            unitId={unit.id}
-            color={unit.color}
-            isDone={!!answers[`${unit.id}-${(current as QuestionStep).idx}`]?.is_done}
-            savedAnswer={answers[`${unit.id}-${(current as QuestionStep).idx}`]?.answer_value || ''}
-            onSaveAnswer={(val) => onSaveAnswer((current as QuestionStep).idx, val)}
-            isAdmin={isAdmin}
-            onEdit={(newQ) => editQuestion((current as QuestionStep).idx, newQ)}
-            onDelete={() => deleteQuestion((current as QuestionStep).idx)}
-            isNew={(current as QuestionStep).q.q === 'Nova Pergunta'}
-          />
-        )}
-
-        {current.type === 'report' && (
-          <div className="step-card-v4 report">
-            <div className="step-header-v4">
-              <FileText size={24} style={{ color: currentColors.main }} />
-              <h3>Relatório de Atendimento</h3>
-            </div>
-            <p className="report-subtitle-v4">Finalize a lição descrevendo o desempenho da aluna.</p>
-            <textarea 
-              className="report-textarea-v4"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Ex: Ione demonstrou facilidade com o vocabulário..."
-            />
-            <button 
-              className={`save-report-btn-v4 ${sessionSuccess ? 'success' : ''}`}
-              onClick={handleSaveSession}
-              disabled={!note.trim() || isSavingSession}
-              style={{ background: sessionSuccess ? 'var(--teal2)' : currentColors.main }}
-            >
-              {isSavingSession ? 'Salvando...' : sessionSuccess ? 'Lição Concluída!' : 'Salvar e Finalizar'}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Navigation Footer */}
-      <div className="step-footer-v4">
-        <button 
-          className={`nav-btn-v4 back ${isFirst ? 'disabled' : ''}`}
-          onClick={handleBack}
-          disabled={isFirst}
-        >
-          <ChevronDown size={24} style={{ transform: 'rotate(90deg)' }} /> Voltar
-        </button>
-
-        <div className="admin-step-actions">
-          {isAdmin && (
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button className="nav-btn-v4 admin-plus" onClick={() => {
-                const type = window.confirm('Deseja adicionar uma QUESTÃO? (Cancelar para adicionar ATIVIDADE CANVA/LINK)') ? 'q' : 'e';
-                if (type === 'q') {
-                  const newQ: Question = { q: 'Nova Pergunta', type: 'mc', opts: ['Opção 1'], mediator: '', hint: '' };
-                  handleUpdateUnitContent({ questions: [...unit.questions, newQ] });
-                } else {
-                  const url = window.prompt('Cole o link da atividade (Canva/HTML):');
-                  if (url) handleUpdateUnitContent({ embed_urls: [...(unit.embed_urls || []), url] });
-                }
-              }} title="Adicionar Novo Item">
-                <Plus size={24} />
-              </button>
+          {current.type === 'report' && (
+            <div className="step-card-v5 report">
+               <div className="report-header-v5">
+                  <div className="report-icon-v5"><FileText size={32} /></div>
+                  <h2>Relatório Final</h2>
+                  <p>Conte-nos como foi o desempenho da Ione hoje.</p>
+               </div>
+               <textarea 
+                 className="report-textarea-v5"
+                 value={note}
+                 onChange={(e) => setNote(e.target.value)}
+                 placeholder="Ex: Ione demonstrou facilidade com as cores..."
+               />
+               <button 
+                 className={`finish-btn-v5 ${sessionSuccess ? 'success' : ''}`}
+                 onClick={handleSaveSession}
+                 disabled={!note.trim() || isSavingSession}
+                 style={{ background: sessionSuccess ? '#10b981' : currentColors.main }}
+               >
+                 {isSavingSession ? 'Salvando...' : sessionSuccess ? 'Lição Concluída! 🎉' : 'Finalizar e Salvar'}
+               </button>
             </div>
           )}
         </div>
+      </div>
+
+      {/* Floating Control Bar */}
+      <div className="activities-v5-footer">
+        <button 
+          className="nav-control-btn-v5 prev"
+          onClick={handleBack}
+          disabled={isFirst}
+        >
+          <ArrowLeft size={20} />
+          Anterior
+        </button>
+
+        <div className="step-info-v5">
+           Passo {activeStep + 1} de {steps.length}
+        </div>
 
         <button 
-          className={`nav-btn-v4 next ${isLast ? 'disabled' : ''}`}
+          className="nav-control-btn-v5 next"
           onClick={handleNext}
           disabled={isLast}
           style={{ background: currentColors.accent }}
         >
-          {isLast ? 'Fim da Aula' : 'Próximo'} <ChevronRight size={20} />
+          Próximo
+          <ChevronRight size={20} />
         </button>
       </div>
 
       {stepReward && (
-        <div className="kid-reward-burst-v4">
-          <span>⭐ +10 XP</span>
-          <span>🎉</span>
+        <div className="reward-popup-v5">
+           ⭐ +10 XP
         </div>
       )}
     </div>
