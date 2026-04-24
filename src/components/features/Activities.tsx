@@ -192,16 +192,7 @@ const StepNavigation: React.FC<{
       </div>
 
       <div className="step-content-v4">
-        <div className="kid-mission-panel-v4" style={{ borderColor: currentColors.light }}>
-          <div className="kid-mission-left">
-            <div className="kid-mascot-avatar">🦊</div>
-            <div>
-              <div className="kid-mascot-line">{mascotByStepType[current.type]}</div>
-              <div className="kid-mission-line">{missionByStepType[current.type]}</div>
-            </div>
-          </div>
-          <div className="kid-reward-chip">+10 XP</div>
-        </div>
+        {/* Banner removido a pedido do usuário para ganhar espaço */}
 
         {current.type === 'game' && (
           <div className="game-launcher-card-v4" onClick={onStartGame} style={{ background: currentColors.light }}>
@@ -220,9 +211,9 @@ const StepNavigation: React.FC<{
               display: 'flex', 
               flexDirection: 'column', 
               justifyContent: 'center', 
-              minHeight: '400px', 
+              minHeight: '250px', 
               textAlign: 'center', 
-              padding: '40px',
+              padding: '24px',
               position: 'relative',
               background: 'linear-gradient(180deg, #ffffff 0%, #f8faff 100%)',
               borderRadius: '24px'
@@ -257,11 +248,11 @@ const StepNavigation: React.FC<{
                 </button>
               )}
 
-              <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                <div style={{ background: '#eef2ff', padding: '10px', borderRadius: '12px', color: '#5b7cff' }}>
-                  <Info size={28} />
+              <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                <div style={{ background: '#eef2ff', padding: '8px', borderRadius: '10px', color: '#5b7cff' }}>
+                  <Info size={24} />
                 </div>
-                <h2 style={{ color: '#1e293b', fontSize: '32px', margin: 0, fontWeight: 900 }}>Guia de Estudo</h2>
+                <h2 style={{ color: '#1e293b', fontSize: '28px', margin: 0, fontWeight: 900 }}>Guia de Estudo</h2>
               </div>
               
               {/* Text Content - Smart Sizing */}
@@ -273,10 +264,10 @@ const StepNavigation: React.FC<{
               }}>
                 <p style={{ 
                   color: '#475569', 
-                  fontSize: unit.external_links?.some(l => l.label.toLowerCase() === 'media' || l.label === 'HTML') ? '20px' : '28px', 
+                  fontSize: unit.external_links?.some(l => l.label.toLowerCase() === 'media' || l.label === 'HTML') ? '18px' : '24px', 
                   maxWidth: '850px', 
                   margin: '0 auto', 
-                  lineHeight: '1.6', 
+                  lineHeight: '1.5', 
                   whiteSpace: 'pre-wrap',
                   fontWeight: unit.external_links?.some(l => l.label.toLowerCase() === 'media' || l.label === 'HTML') ? 500 : 700,
                   transition: 'all 0.3s ease'
@@ -290,9 +281,9 @@ const StepNavigation: React.FC<{
                 <div className="brief-media-container" style={{ 
                   display: 'flex', 
                   flexDirection: 'column', 
-                  gap: '32px', 
+                  gap: '24px', 
                   alignItems: 'center', 
-                  marginTop: '48px',
+                  marginTop: '24px',
                   width: '100%'
                 }}>
                   {unit.external_links.filter(l => l.label.toLowerCase() === 'media' || l.label === 'HTML').map((media, idx) => {
@@ -302,12 +293,12 @@ const StepNavigation: React.FC<{
                       return (
                         <div key={idx} style={{ 
                           width: '100%', 
-                          maxWidth: '800px', 
+                          maxWidth: '700px', 
                           aspectRatio: '16/9', 
-                          boxShadow: '0 30px 60px -12px rgba(0,0,0,0.25)', 
-                          borderRadius: '24px', 
+                          boxShadow: '0 20px 40px -10px rgba(0,0,0,0.2)', 
+                          borderRadius: '20px', 
                           overflow: 'hidden',
-                          border: '4px solid #fff'
+                          border: '3px solid #fff'
                         }}>
                           <iframe width="100%" height="100%" src={`https://www.youtube.com/embed/${vidId}`} frameBorder="0" allowFullScreen></iframe>
                         </div>
@@ -315,23 +306,23 @@ const StepNavigation: React.FC<{
                     }
                     if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i) || url.includes('ibb.co')) {
                       return (
-                        <div key={idx} style={{ position: 'relative', width: '100%', maxWidth: '800px' }}>
+                        <div key={idx} style={{ position: 'relative', width: '100%', maxWidth: '700px' }}>
                           <img 
                             src={url} 
                             alt="Media" 
                             style={{ 
                               width: '100%', 
                               height: 'auto', 
-                              borderRadius: '24px', 
-                              boxShadow: '0 20px 40px rgba(0,0,0,0.12)',
-                              border: '4px solid #fff'
+                              borderRadius: '20px', 
+                              boxShadow: '0 15px 30px rgba(0,0,0,0.1)',
+                              border: '3px solid #fff'
                             }} 
                           />
                         </div>
                       );
                     }
                     if (media.label === 'HTML') {
-                      return <div key={idx} dangerouslySetInnerHTML={{ __html: url }} style={{ width: '100%', maxWidth: '1000px' }} />;
+                      return <div key={idx} dangerouslySetInnerHTML={{ __html: url }} style={{ width: '100%', maxWidth: '900px' }} />;
                     }
                     return null;
                   })}
@@ -376,23 +367,23 @@ const StepNavigation: React.FC<{
                 className="btn" 
                 onClick={handleNext}
                 style={{ 
-                  margin: '60px auto 0', 
-                  padding: '20px 48px', 
-                  fontSize: '20px', 
+                  margin: '32px auto 0', 
+                  padding: '16px 40px', 
+                  fontSize: '18px', 
                   background: 'linear-gradient(135deg, #5b7cff, #7c3aed)',
-                  borderRadius: '24px',
-                  boxShadow: '0 12px 30px rgba(91, 124, 255, 0.3)',
+                  borderRadius: '20px',
+                  boxShadow: '0 8px 20px rgba(91, 124, 255, 0.3)',
                   color: '#fff',
                   fontWeight: 900,
                   border: 'none',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px',
+                  gap: '10px',
                   transition: 'all 0.3s ease'
                 }}
               >
-                Começar a Aula <ChevronRight size={24} />
+                Começar a Aula <ChevronRight size={22} />
               </button>
             </div>
           </div>
