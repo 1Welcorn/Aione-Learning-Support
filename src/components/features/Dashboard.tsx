@@ -45,11 +45,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="dash-v5-container">
       {/* Header de Status do Aluno (Design Premium) */}
-      <header className="dash-v5-header">
+      <header className="dash-v5-header" style={{ paddingTop: '40px' }}>
         <div className="dash-v5-profile" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div className="dash-v5-avatar-wrapper" style={{ position: 'relative' }}>
-             <div className="dash-v5-avatar" style={{ width: '80px', height: '80px', borderRadius: '24px', overflow: 'visible' }}>
-               <img src="https://i.ibb.co/PZNCmrTf/Captura-de-tela-2026-04-24-002158.png" alt="Ione Exploradora" style={{ width: '120%', position: 'absolute', bottom: 0, left: '-10%' }} />
+             <div className="dash-v5-avatar" style={{ width: '100px', height: '100px', borderRadius: '32px', background: '#f1f5f9', overflow: 'visible' }}>
+               <img src="https://i.ibb.co/PZNCmrTf/Captura-de-tela-2026-04-24-002158.png" alt="Ione Exploradora" style={{ width: '140%', position: 'absolute', bottom: 0, left: '-20%', zIndex: 10 }} />
              </div>
           </div>
           <div>
