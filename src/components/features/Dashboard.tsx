@@ -45,7 +45,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="dash-v5-container">
       {/* Header de Status do Aluno (Design Premium) */}
-      <header className="dash-v5-header" style={{ minHeight: '100px', alignItems: 'center', paddingTop: '10px' }}>
+      <header className="dash-v5-header" style={{ minHeight: '100px', alignItems: 'center', paddingTop: '25px' }}>
         <div className="dash-v5-profile" style={{ display: 'flex', alignItems: 'center', gap: '20px', overflow: 'visible' }}>
           <div className="dash-v5-avatar-wrapper" style={{ position: 'relative', width: '70px', height: '70px' }}>
              <div className="dash-v5-avatar" style={{ width: '100%', height: '100%', borderRadius: '20px', background: '#f1f5f9', overflow: 'visible' }}>
