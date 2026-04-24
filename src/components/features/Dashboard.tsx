@@ -43,7 +43,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   if (journeyLoading || statsLoading) return <div className="screen-loading">Carregando sua jornada...</div>;
 
   return (
-    <div className="dash-v5-container">
+    <div className="dash-v5-container" style={{ paddingTop: '20px' }}>
       {/* Header de Status do Aluno (Design Premium) */}
       <header className="dash-v5-header" style={{ minHeight: '100px', alignItems: 'center', paddingTop: '10px' }}>
         <div className="dash-v5-profile" style={{ display: 'flex', alignItems: 'center', gap: '20px', overflow: 'visible' }}>
@@ -56,7 +56,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                    width: '120%', 
                    height: 'auto',
                    position: 'absolute', 
-                   bottom: '0', 
+                   bottom: '-5px', 
                    left: '50%', 
                    transform: 'translateX(-50%)', 
                    zIndex: 10,
