@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
-import { Save, Plus, Trash2, BookOpen, Target, Lightbulb, ChevronLeft, Eye, X, Globe } from 'lucide-react';
+import { Save, Plus, Trash2, BookOpen, Target, Lightbulb, ChevronLeft, Eye, X, Globe, Lock, Unlock } from 'lucide-react';
 import { UnitCard } from './Activities';
 import { COLORS } from '../../constants';
+import { useSarehData } from '../../hooks/useData';
+
+interface EmbedActivity {
+  url: string;
+  title: string;
+  width: string;
+  maskIcon?: string;
+}
 
 interface PlanningEditorProps {
   unitId: string;
   onBack: () => void;
+  updateUnit: (id: string, updates: any) => Promise<{ success: boolean; error?: string }>;
 }
 
 const normalizeEmbedUrl = (rawUrl: string): string => {
@@ -39,14 +48,17 @@ const normalizeEmbedUrl = (rawUrl: string): string => {
   }
 };
 
-const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
+const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack, updateUnit }) => {
+  // const { updateUnit } = useSarehData(); - Removido para evitar conflito de canais realtime
   const [loading, setLoading] = useState(true);
   const [unitData, setUnitData] = useState<any>(null);
   const [newWord, setNewWord] = useState("");
+  const [descText, setDescText] = useState("");
   const [tempEmbed, setTempEmbed] = useState("");
   const [isSavingEmbed, setIsSavingEmbed] = useState(false);
   const [embedSaved, setEmbedSaved] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
 
   useEffect(() => {
     fetchUnit();
@@ -54,17 +66,30 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
 
   const fetchUnit = async () => {
     const { data } = await supabase.from('units').select('*').eq('id', unitId).single();
-    if (data) setUnitData(data);
+    if (data) {
+      setUnitData(data);
+      setDescText(data.descriptors?.join(', ') || '');
+    }
     setLoading(false);
   };
 
   const handleSave = async () => {
-    const { error } = await supabase.from('units').update(unitData).eq('id', unitId);
-    if (!error) {
-      alert("Planejamento atualizado! 🚀");
-    } else {
-      console.error('Error updating unit:', error);
-      alert('Erro ao salvar: ' + error.message);
+    try {
+      const descs = descText.split(',').map((v: string) => v.trim()).filter(Boolean);
+      const updates = { ...unitData, descriptors: descs };
+      
+      console.log('PlanningEditor: Saving changes...', updates);
+      const result = await updateUnit(unitId, updates);
+      
+      if (result.success) {
+        setIsDirty(false);
+        alert("Planejamento atualizado com sucesso! 🚀");
+      } else {
+        alert('Erro ao salvar: ' + result.error);
+      }
+    } catch (err: any) {
+      console.error('Exception in handleSave:', err);
+      alert('Erro inesperado: ' + err.message);
     }
   };
 
@@ -73,6 +98,7 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
     const updatedVocab = [...(unitData.vocabulary_list || []), newWord.trim()];
     setUnitData({ ...unitData, vocabulary_list: updatedVocab });
     setNewWord("");
+    setIsDirty(true);
   };
 
   const saveEmbedLink = async () => {
@@ -80,39 +106,35 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
     setIsSavingEmbed(true);
     setEmbedSaved(false);
     const current = Array.isArray(unitData.embed_urls) ? unitData.embed_urls : [];
-    const nextEmbeds = [...current, normalizeEmbedUrl(tempEmbed)];
-    const { data, error } = await supabase
-      .from('units')
-      .update({ embed_urls: nextEmbeds })
-      .eq('id', unitId)
-      .select('id, embed_urls')
-      .single();
-
+    const newEmbed: EmbedActivity = { url: normalizeEmbedUrl(tempEmbed), title: `Nova Atividade`, width: '100%' };
+    const nextEmbeds = [...current, newEmbed];
+    
+    setUnitData({ ...unitData, embed_urls: nextEmbeds });
     setIsSavingEmbed(false);
-
-    if (error) {
-      console.error('Error saving embed link:', error);
-      alert('Erro ao salvar link: ' + error.message);
-      return;
-    }
-
-    const persistedEmbeds = Array.isArray(data?.embed_urls) ? data.embed_urls : nextEmbeds;
-    setUnitData({ ...unitData, embed_urls: persistedEmbeds });
     setTempEmbed("");
     setEmbedSaved(true);
+    setIsDirty(true);
   };
 
   const removeEmbed = (idx: number) => {
     const current = [...(unitData.embed_urls || [])];
     current.splice(idx, 1);
     setUnitData({ ...unitData, embed_urls: current });
+    setIsDirty(true);
   };
 
   if (loading) return (
-
     <div className="screen-loading">
       <div className="loader-spinner"></div>
       <p>Carregando plano...</p>
+    </div>
+  );
+
+  if (!unitData) return (
+    <div className="screen-error">
+      <h2>Erro ao carregar unidade</h2>
+      <p>Não foi possível encontrar os dados para a unidade ID: {unitId}</p>
+      <button onClick={onBack} className="primary-btn">Voltar</button>
     </div>
   );
 
@@ -129,11 +151,60 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
           </div>
         </div>
         <div className="header-right">
+          <button 
+            className={`admin-lock-btn-editor ${unitData.is_locked ? 'locked' : ''}`}
+            onClick={() => setUnitData({ ...unitData, is_locked: !unitData.is_locked })}
+            style={{
+              padding: '10px 18px',
+              borderRadius: '14px',
+              border: 'none',
+              background: unitData.is_locked ? '#fee2e2' : '#f1f5f9',
+              color: unitData.is_locked ? '#ef4444' : '#64748b',
+              fontWeight: 900,
+              fontSize: '13px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            {unitData.is_locked ? <Lock size={18} /> : <Unlock size={18} />}
+            {unitData.is_locked ? 'BLOQUEADO' : 'LIBERADO'}
+          </button>
           <button onClick={() => setIsPreviewing(true)} className="preview-plano-btn">
             <Eye size={20} /> PREVIEW
           </button>
           <button onClick={handleSave} className="save-plano-btn">
             <Save size={20} /> SALVAR PLANO
+          </button>
+          <button 
+            onClick={async () => {
+              if (confirm('Deseja realmente apagar TODAS as atividades e o banco de palavras desta aula? Esta ação não pode ser desfeita.')) {
+                setUnitData({ 
+                  ...unitData, 
+                  embed_urls: [], 
+                  embed_preview_images: [], 
+                  vocabulary_list: [],
+                  external_links: (unitData.external_links || []).filter((l: any) => l.label !== 'media' && l.label !== 'HTML')
+                });
+                setIsDirty(true);
+                alert('Tudo limpo! Agora você pode começar as novas atividades do zero. 🚀');
+              }
+            }}
+            className="clear-all-btn"
+            style={{
+              padding: '10px 14px',
+              borderRadius: '16px',
+              border: '1px solid #fee2e2',
+              background: 'white',
+              color: '#ef4444',
+              fontWeight: 800,
+              fontSize: '11px',
+              cursor: 'pointer',
+              marginLeft: '8px'
+            }}
+          >
+            RECOMEÇAR DO ZERO
           </button>
         </div>
       </header>
@@ -290,20 +361,107 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
                 <Plus size={20} /> {isSavingEmbed ? 'Salvando...' : embedSaved ? 'Salvo' : 'Salvar'}
               </button>
             </div>
-            <div className="embed-list-v4">
+            <div className="embed-list-editor-v5">
               {(!unitData.embed_urls || unitData.embed_urls.length === 0) && (
                 <div className="empty-mini">Nenhuma atividade interativa adicionada.</div>
               )}
-              {unitData.embed_urls?.map((url: string, i: number) => (
-                <div key={i} className="embed-item-v4">
-                  <Globe size={14} className="text-teal" />
-                  <span className="embed-url-text">{url}</span>
-                  <button className="embed-remove-btn" onClick={() => removeEmbed(i)}>
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
+              {unitData.embed_urls?.map((itemOrUrl: string | EmbedActivity, i: number) => {
+                const item: EmbedActivity = typeof itemOrUrl === 'string' ? { url: itemOrUrl, title: `Atividade ${i+1}`, width: '100%' } : itemOrUrl;
+                
+                return (
+                  <div key={i} className="admin-embed-edit-card-v5">
+                    <div className="admin-embed-main-row">
+                      <input 
+                        className="admin-embed-title-input"
+                        value={item.title || ''} 
+                        placeholder="Título da atividade"
+                        onChange={(e) => {
+                          const next = [...unitData.embed_urls];
+                          next[i] = { ...item, title: e.target.value };
+                          setUnitData({ ...unitData, embed_urls: next });
+                        }}
+                      />
+                      <button className="admin-item-del" title="Excluir" onClick={() => removeEmbed(i)}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                    
+                    <input 
+                      className="admin-embed-url-input"
+                      value={item.url} 
+                      placeholder="URL do Wordwall / Embed"
+                      onChange={(e) => {
+                        const next = [...unitData.embed_urls];
+                        next[i] = { ...item, url: e.target.value };
+                        setUnitData({ ...unitData, embed_urls: next });
+                      }}
+                    />
+                    
+                    <div className="admin-embed-thumbnail-row" style={{ marginTop: '8px' }}>
+                      <input 
+                        className="admin-embed-url-input"
+                        style={{ fontSize: '12px', background: '#fefce8' }}
+                        value={unitData.embed_preview_images?.[i] || ''} 
+                        placeholder="URL da Imagem de Capa (Opcional)"
+                        onChange={(e) => {
+                          const nextImages = [...(unitData.embed_preview_images || [])];
+                          // Garantir que o array tem tamanho suficiente
+                          while(nextImages.length <= i) nextImages.push('');
+                          nextImages[i] = e.target.value;
+                          setUnitData({ ...unitData, embed_preview_images: nextImages });
+                          setIsDirty(true);
+                        }}
+                      />
+                    </div>
+                    
+                    <div className="admin-embed-width-row">
+                      <span>Largura do Card:</span>
+                      <input 
+                        type="range" min="30" max="100" step="5"
+                        value={parseInt(item.width?.replace('%', '') || '100')}
+                        onChange={(e) => {
+                          const next = [...unitData.embed_urls];
+                          next[i] = { ...item, width: e.target.value + '%' };
+                          setUnitData({ ...unitData, embed_urls: next });
+                        }}
+                      />
+                      <span className="width-label">{item.width || '100%'}</span>
+                    </div>
+
+                    <div className="admin-embed-mask-row" style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 700, color: '#475569' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={!!item.maskIcon} 
+                          onChange={(e) => {
+                            const next = [...unitData.embed_urls];
+                            next[i] = { ...item, maskIcon: e.target.checked ? '/src/assets/memory_game.png' : undefined };
+                            setUnitData({ ...unitData, embed_urls: next });
+                            setIsDirty(true);
+                          }}
+                        />
+                        <span>Usar Ícone de Mistério (Esconder conteúdo)</span>
+                      </label>
+                      {item.maskIcon && <img src={item.maskIcon} alt="Icon" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
+          </section>
+
+          <section className="editor-section-card">
+            <h3 className="section-title-v4">
+              <Plus className="text-orange" size={20} /> Descritores BNCC
+            </h3>
+            <p className="field-help">Adicione os códigos das habilidades da BNCC separados por vírgula (ex: D3, D5, EF06LI01).</p>
+            <input 
+              type="text" 
+              className="editor-input-v4"
+              placeholder="Ex: D3, D5, EF06LI01..."
+              value={descText}
+              onChange={(e) => setDescText(e.target.value)}
+            />
           </section>
           <section className="editor-section-card">
             <h3 className="section-title-v4">
@@ -1152,32 +1310,65 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
           gap: 10px;
         }
 
-        .embed-item-v4 {
+        .admin-embed-edit-card-v5 {
           background: #f8fafc;
-          padding: 12px 16px;
-          border-radius: 16px;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 16px;
+          margin-bottom: 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .admin-embed-main-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .admin-embed-title-input {
+          flex: 1;
+          padding: 8px 12px;
+          border: 1.5px solid #cbd5e1;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 700;
+          outline: none;
+        }
+
+        .admin-embed-url-input {
+          width: 100%;
+          padding: 8px 12px;
+          border: 1.5px solid #cbd5e1;
+          border-radius: 8px;
+          font-size: 13px;
+          color: #64748b;
+          outline: none;
+        }
+
+        .admin-embed-width-row {
           display: flex;
           align-items: center;
           gap: 12px;
-          border: 1px solid #e2e8f0;
-          transition: all 0.2s;
-        }
-
-        .embed-item-v4:hover {
-          border-color: #cbd5e1;
-        }
-
-        .embed-url-text {
-          font-size: 13px;
+          font-size: 12px;
+          font-weight: 600;
           color: #64748b;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          flex: 1;
-          font-family: monospace;
         }
 
-        .embed-remove-btn {
+        .admin-embed-width-row input[type="range"] {
+          flex: 1;
+        }
+
+        .width-label {
+          min-width: 40px;
+          text-align: right;
+          font-weight: 800;
+          color: #1e293b;
+        }
+
+        .admin-item-del {
           background: #fee2e2;
           border: none;
           color: #ef4444;
@@ -1191,7 +1382,7 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack }) => {
           transition: all 0.2s;
         }
 
-        .embed-remove-btn:hover {
+        .admin-item-del:hover {
           background: #ef4444;
           color: white;
         }

@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useStudentJourney } from '../../hooks/useStudentJourney';
-import { useDashboardData } from '../../hooks/useDashboardData';
 import { COLORS } from '../../constants';
 import { LessonCard } from '../ui/LessonCard';
 import type { Lesson } from '../../types/index';
@@ -17,6 +16,10 @@ interface DashboardProps {
   sessionsCount: number;
   mediatorName: string;
   mediatorPhone: string;
+  units: any[];
+  answers: Record<string, any>;
+  isAdmin?: boolean;
+  onUpdateUnit?: (id: string, updates: any) => Promise<{ success: boolean; error?: string }>;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -25,10 +28,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
   sessionsCount,
   mediatorName,
   mediatorPhone,
+  units,
+  answers,
+  isAdmin,
+  onUpdateUnit
 }) => {
   const { user } = useAuth();
   const { stats, loading: statsLoading } = useStudentJourney(user?.id || '');
-  const { units, loading: journeyLoading } = useDashboardData(user?.id || '');
 
   const currentLevel = stats?.level || 1;
   const currentStreak = stats?.streak || 0;
@@ -40,31 +46,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  if (journeyLoading || statsLoading) return <div className="screen-loading">Carregando sua jornada...</div>;
+  if (statsLoading) return <div className="screen-loading">Carregando sua jornada...</div>;
 
   return (
     <div className="dash-v5-container">
       {/* Header de Status do Aluno (Design Premium) */}
       <header className="dash-v5-header" style={{ minHeight: '100px', alignItems: 'center', paddingTop: '25px' }}>
         <div className="dash-v5-profile" style={{ display: 'flex', alignItems: 'center', gap: '20px', overflow: 'visible' }}>
-          <div className="dash-v5-avatar-wrapper" style={{ position: 'relative', width: '70px', height: '70px' }}>
-             <div className="dash-v5-avatar" style={{ width: '100%', height: '100%', borderRadius: '20px', background: '#f1f5f9', overflow: 'visible' }}>
-               <img 
-                 src="https://i.ibb.co/PZNCmrTf/Captura-de-tela-2026-04-24-002158.png" 
-                 alt="Ione Exploradora" 
-                 style={{ 
-                   width: '120%', 
-                   height: 'auto',
-                   position: 'absolute', 
-                   bottom: '-5px', 
-                   left: '50%', 
-                   transform: 'translateX(-50%)', 
-                   zIndex: 10,
-                   pointerEvents: 'none'
-                 }} 
-               />
-             </div>
-          </div>
           <div>
             <h1 style={{ fontSize: '26px', fontWeight: 900, color: '#1e293b', margin: 0 }}>Oi, Ione! 🌟</h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '8px' }}>
@@ -114,10 +102,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* Grid de Aulas (Trilha com Pontilhado) */}
       <div className="trail-grid-v5">
         {units.map((unit, idx) => {
-          const isDone = unit.unit_status === 'completed';
-          const isLocked = idx > 0 && units[idx-1].unit_status !== 'completed';
+          const isDone = unit.questions?.every((_: any, i: number) => answers[`${unit.id}-${i}`]?.is_done);
+          const isLocked = !isAdmin && (unit.is_locked || (idx > 0 && !units[idx-1].questions?.every((_: any, i: number) => answers[`${units[idx-1].id}-${i}`]?.is_done)));
           
-          const t = (unit.unit_sub || unit.unit_title || '').toLowerCase();
+          const t = (unit.sub || unit.title || '').toLowerCase();
           let base = '';
           if (t.includes('cozinha')) base = 'Aula 1 Vocabulário da Cozinha';
           else if (t.includes('oral') || t.includes('escuta')) base = 'Aula 2 Compreensão Oral';
@@ -128,10 +116,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
           else if (t.includes('cores')) base = 'Aula 7 Cores e Frutas';
           else if (t.includes('números')) base = 'Aula 8 Números e Quantidade';
 
-          // Map Unit to Lesson interface
           const lessonData: Lesson = {
-            id: unit.unit_id,
-            title: unit.unit_sub || unit.unit_title,
+            id: unit.id,
+            title: unit.sub || unit.title,
             status: isDone ? 'completed' : (isLocked ? 'locked' : 'not_started'),
             iconOutline: base ? `/unit-icons/${base}-não iniciada.png` : '',
             icon3D: base ? `/unit-icons/${base}.png` : '',
@@ -140,10 +127,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           return (
             <LessonCard 
-              key={unit.unit_id} 
+              key={unit.id} 
               lesson={lessonData} 
               idx={idx}
-              onClick={() => !isLocked && onNavigate('activities', unit.unit_id)}
+              isAdmin={isAdmin}
+              onToggleLock={async () => {
+                if (onUpdateUnit) {
+                   const res = await onUpdateUnit(unit.id, { is_locked: !unit.is_locked });
+                   if (!res.success) alert('Erro ao atualizar bloqueio: ' + res.error);
+                }
+              }}
+              onClick={() => !isLocked && onNavigate('activities', unit.id)}
             />
           );
         })}
@@ -166,7 +160,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
            <span style={{ background: '#fef3c7', color: '#92400e', padding: '4px 16px', borderRadius: '20px', fontSize: '11px', fontWeight: 900 }}>Dica do Mestre</span>
            <div className="zap-support-v5-static" onClick={handleSupportClick} style={{ background: 'white', padding: '10px 24px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '15px', border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', cursor: 'pointer' }}>
-              <div style={{ width: '32px', height: '32px', background: '#f1f5f9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyCenter: 'center', fontWeight: 900 }}>{mediatorName.charAt(0)}</div>
+              <div style={{ width: '32px', height: '32px', background: '#f1f5f9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>{mediatorName.charAt(0)}</div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                  <span style={{ fontSize: '13px', fontWeight: 800 }}>Prof. {mediatorName}</span>
                  <span style={{ fontSize: '10px', color: '#64748b' }}>Sua mediadora</span>
@@ -178,16 +172,3 @@ export const Dashboard: React.FC<DashboardProps> = ({
     </div>
   );
 };
-
-// Componentes Auxiliares
-function StatBadge({ icon, value, label }: { icon: React.ReactNode, value: string, label: string }) {
-  return (
-    <div className="stat-badge-v5">
-      <div className="stat-badge-icon">{icon}</div>
-      <div className="stat-badge-info">
-        <span className="stat-badge-val">{value}</span>
-        <span className="stat-badge-lbl">{label}</span>
-      </div>
-    </div>
-  );
-}

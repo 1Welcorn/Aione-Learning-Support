@@ -25,7 +25,8 @@ export const useSarehData = () => {
           descriptors: typeof u.descriptors === 'string' ? JSON.parse(u.descriptors) : (u.descriptors || []),
           embed_urls: typeof u.embed_urls === 'string' ? JSON.parse(u.embed_urls) : (u.embed_urls || []),
           questions: typeof u.questions === 'string' ? JSON.parse(u.questions) : (u.questions || []),
-          external_links: typeof u.external_links === 'string' ? JSON.parse(u.external_links) : (u.external_links || [])
+          external_links: typeof u.external_links === 'string' ? JSON.parse(u.external_links) : (u.external_links || []),
+          is_locked: !!u.is_locked
         }));
         setUnits(sanitizedUnits);
       }
@@ -52,8 +53,9 @@ export const useSarehData = () => {
   useEffect(() => {
     fetchData();
 
-    // Inscrição em tempo real
-    const channel = supabase.channel('sareh-realtime')
+    // Inscrição em tempo real com nome único para evitar conflitos entre instâncias do hook
+    const channelId = `sareh-realtime-${Math.random().toString(36).substring(7)}`;
+    const channel = supabase.channel(channelId)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'units' }, fetchData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sessions' }, fetchData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'answers' }, fetchData)
@@ -222,17 +224,33 @@ export const useSarehData = () => {
     }
   };
 
-  const updateUnit = async (id: string, updates: Partial<Unit>) => {
-    const { error } = await supabase.from('units').update(updates).eq('id', id);
-    if (error) {
-      console.error('Error updating unit:', error);
-      window.alert('Erro ao salvar no banco de dados: ' + error.message + '\nVerifique se você rodou o SQL de permissões.');
-      return false;
+  const updateUnit = async (id: string, updates: any) => {
+    try {
+      console.log('useData: Updating unit', id, updates);
+      
+      // Tentativa 1: Update normal
+      let { error } = await supabase.from('units').update(updates).eq('id', id);
+      
+      // Se der erro de coluna is_locked inexistente
+      if (error && error.message?.includes('is_locked')) {
+        console.warn('useData: Column is_locked not found, retrying without it');
+        const { is_locked, ...safeUpdates } = updates;
+        const retry = await supabase.from('units').update(safeUpdates).eq('id', id);
+        error = retry.error;
+      }
+
+      if (error) {
+        console.error('[SAVE ERROR] useData:', error);
+        return { success: false, error: error.message };
+      }
+      
+      // Atualização otimista
+      setUnits(prev => prev.map(u => u.id === id ? { ...u, ...updates } : u));
+      return { success: true };
+    } catch (err: any) {
+      console.error('[SAVE EXCEPTION] useData:', err);
+      return { success: false, error: err.message || 'Erro desconhecido' };
     }
-    
-    // Optimistic update
-    setUnits(prev => prev.map(u => u.id === id ? { ...u, ...updates } : u));
-    return true;
   };
 
   return {

@@ -1,12 +1,17 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import type { Unit, Question } from '../../types';
+import type { Unit, Question, ExternalLink } from '../../types';
 import { COLORS } from '../../constants';
 import { 
   Sparkles, Plus, FileText, ChevronDown, 
-  Trash2, X, Info, Edit2,
+  Trash2, Info, Edit2,
   ChefHat, Headphones, User, Building2, Smartphone, BookOpen, GraduationCap,
-  Maximize, Home, ChevronRight, ArrowLeft
+  Maximize, ChevronRight, ChevronLeft, ArrowLeft,
+  Eye, Lock, Unlock, X, ClipboardList
 } from 'lucide-react';
+import homeButtonImg from '../../assets/home-button.png';
+import memoryGameImg from '../../assets/memory_game.png';
+import wordGameImg from '../../assets/word_game.png';
+import { HomeButton } from '../ui/HomeButton';
 import { QuestionBlock } from './QuestionBlock';
 import EmbedPreview from '../ui/EmbedPreview';
 import { useAuth } from '../../context/AuthContext';
@@ -31,6 +36,9 @@ interface EmbedStep extends BaseStep {
   type: 'embed';
   url: string;
   idx: number;
+  title?: string;
+  width?: string;
+  maskIcon?: string;
 }
 
 interface QuestionStep extends BaseStep {
@@ -75,22 +83,80 @@ const normalizeEmbedUrl = (rawUrl: string): string => {
   }
 };
 
+const VideoPlayerV5: React.FC<{ media: ExternalLink }> = ({ media }) => {
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const [playCount, setPlayCount] = React.useState(0);
+  const targetRepeats = media.repeatCount || 0;
+
+  React.useEffect(() => {
+    // Reset play count when URL changes
+    setPlayCount(0);
+  }, [media.url]);
+
+  React.useEffect(() => {
+    if (videoRef.current) {
+       videoRef.current.pause();
+       videoRef.current.currentTime = 0;
+    }
+
+    const timer = setTimeout(() => {
+      if (videoRef.current) {
+        videoRef.current.play().catch(e => {
+          console.log('Autoplay blocked unmuted, trying muted:', e);
+          if (videoRef.current) {
+            videoRef.current.muted = true;
+            videoRef.current.play();
+          }
+        });
+      }
+    }, (media.delay || 0) * 1000);
+
+    return () => clearTimeout(timer);
+  }, [media.url, media.delay]);
+
+  const handleEnded = () => {
+    if (media.loop) return; // Native loop handles it
+    
+    if (targetRepeats > 0 && playCount < targetRepeats - 1) {
+      setPlayCount(prev => prev + 1);
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.play();
+      }
+    }
+  };
+
+  return (
+    <video 
+       ref={videoRef}
+       src={media.url} 
+       muted={false} 
+       loop={media.loop && !media.repeatCount} 
+       playsInline
+       onEnded={handleEnded}
+       style={{ width: '100%', borderRadius: '16px', display: 'block' }}
+    />
+  );
+};
+
 // --- STEP NAVIGATION COMPONENT (ONE CARD AT A TIME) ---
 const StepNavigation: React.FC<{
   unit: Unit;
   answers: Record<string, any>;
   onSaveAnswer: (qIdx: number, val: string) => Promise<boolean>;
   isAdmin?: boolean;
+  isMediator?: boolean;
   editQuestion: (idx: number, newQ: Question) => void;
   deleteQuestion: (idx: number) => void;
   currentColors: any;
   onStartGame?: () => void;
-  handleUpdateUnitContent: (updates: Partial<Unit>) => void;
+  handleUpdateUnitContent: (updates: Partial<Unit>) => Promise<{ success: boolean; error?: string }>;
   onSaveSession: (note: string) => Promise<boolean>;
-  onToggle: () => void;
+  onToggle?: () => void;
   completeLesson: (uId: string, xp: number) => Promise<any>;
   isFirstUnit?: boolean;
-}> = ({ unit, answers, onSaveAnswer, isAdmin, editQuestion, deleteQuestion, currentColors, onStartGame, handleUpdateUnitContent, onSaveSession, onToggle, completeLesson, isFirstUnit }) => {
+  onGoHome?: () => void;
+}> = ({ unit, answers, onSaveAnswer, isAdmin, isMediator, editQuestion, deleteQuestion, currentColors, onStartGame, handleUpdateUnitContent, onSaveSession, onToggle, completeLesson, isFirstUnit, onGoHome }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [note, setNote] = useState('');
   const [isSavingSession, setIsSavingSession] = useState(false);
@@ -101,7 +167,52 @@ const StepNavigation: React.FC<{
   const [stepReward, setStepReward] = useState(false);
   const [/*hintPos*/, /*setHintPos*/] = useState<null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+  const [saveError, setSaveError] = useState('');
+  const [showGlobalReport, setShowGlobalReport] = useState(false);
   const previewRef = React.useRef<any>(null);
+
+  const totalQuestions = unit.questions.length;
+  const questionsAnswered = useMemo(() => {
+    return unit.questions.filter((_, i) => answers[`${unit.id}-${i}`]?.is_done).length;
+  }, [unit, answers]);
+
+  const isCompleted = questionsAnswered === totalQuestions && totalQuestions > 0;
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setIsEditingBrief(false);
+    }
+  }, [isAdmin]);
+
+  // Helper to insert tags into the textarea
+  const insertTag = (startTag: string, endTag: string) => {
+    const textarea = document.getElementById('brief-editor-textarea') as HTMLTextAreaElement;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const before = text.substring(0, start);
+    const after = text.substring(end, text.length);
+    const selected = text.substring(start, end);
+
+    const newText = before + startTag + selected + endTag + after;
+    setTempBrief(newText);
+    
+    // Reset focus and selection
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + startTag.length, end + startTag.length);
+    }, 10);
+  };
+
+  useEffect(() => {
+    if (isEditingBrief) {
+       setTempBrief(unit.brief || '');
+       setTempLinks(unit.external_links || []);
+    }
+  }, [isEditingBrief, unit]);
 
   
 
@@ -111,22 +222,39 @@ const StepNavigation: React.FC<{
     return () => document.removeEventListener('fullscreenchange', onFsChange);
   }, []);
 
-  // Group all content into steps
-  const embeds = (unit.embed_urls || [])
-    .map(normalizeEmbedUrl)
-    .filter(u => u.trim());
-  const steps: StepContent[] = [
-    // Step 0: Game Launcher (optional)
-    ...(isAdmin ? [] : [{ type: 'game' as const }]),
-    // Next: Brief/Instructions
-    ...(unit.brief ? [{ type: 'brief' as const }] : []),
-    // Next: All embeds
-    ...embeds.map((url, i): EmbedStep => ({ type: 'embed', url, idx: i })),
-    // Next: All questions
-    ...unit.questions.map((q, i): QuestionStep => ({ type: 'question', q, idx: i })),
-    // Final Step: Report
-    { type: 'report' } as ReportStep
-  ];
+  // Group all content into steps - Linear journey
+  const steps: StepContent[] = [];
+  
+  // 1. Briefing / Study Guide
+  if (unit.brief || (unit.external_links && unit.external_links.length > 0)) {
+    steps.push({ type: 'brief' });
+  }
+  
+  // 2. WordFall Game
+  steps.push({ type: 'game' });
+  
+  // 3. Interactive Activities (Embeds)
+  const embedItems = (unit.embed_urls || []).map((itemOrUrl, i): EmbedStep => {
+    const item = typeof itemOrUrl === 'string' ? { url: itemOrUrl, title: `Atividade ${i+1}`, width: '100%' } : itemOrUrl;
+    return {
+      type: 'embed',
+      url: normalizeEmbedUrl(item.url),
+      title: item.title,
+      width: item.width,
+      maskIcon: item.maskIcon,
+      idx: i
+    };
+  }).filter(e => e.url.trim());
+  
+  steps.push(...embedItems);
+  
+  // 4. Questions
+  unit.questions.forEach((q, i) => {
+    steps.push({ type: 'question', q, idx: i });
+  });
+  
+  // 5. Final Report
+  steps.push({ type: 'report' });
 
   const current = steps[activeStep] as StepContent;
   const isLast = activeStep === steps.length - 1;
@@ -174,209 +302,449 @@ const StepNavigation: React.FC<{
       setNote('');
       setTimeout(() => {
         setSessionSuccess(false);
-        onToggle();
+        onToggle?.();
       }, 2000);
     }
   };
 
-  return (
-    <div className="activities-v5-wrapper">
-      {/* Immersive Top Progress */}
-      <div className="activities-v5-header">
-         <button className="back-btn-v5" onClick={onToggle}>
-            <ArrowLeft size={20} />
-            Sair da Aula
-         </button>
-         
-         <div className="progress-segments-v5">
-            {steps.map((_, i) => (
-               <div 
-                  key={i} 
-                  className={`segment-v5 ${i === activeStep ? 'active' : ''} ${i < activeStep ? 'done' : ''}`}
-               />
-            ))}
-         </div>
 
-         <div className="unit-badge-v5">
-            {unit.title}
-         </div>
+    if (!current) return <div className="activities-v5-wrapper">Carregando etapa...</div>;
+
+    return (
+    <div className={`activities-v5-wrapper step-type-${current.type}`}>
+      {/* 1. TOP PROFILE BAR */}
+      <div className="profile-header-image-style" style={{ margin: '20px auto' }}>
+        <div className="avatar-and-name">
+          <div className="user-text-v7">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+               <h2 style={{ fontSize: '24px', margin: 0, fontWeight: 900 }}>Oi, Ione! ☀️</h2>
+            </div>
+            <div className="xp-bar-mini">
+               <div className="xp-fill-mini" style={{ width: '15%' }}></div>
+            </div>
+            <small style={{ fontSize: '12px', fontWeight: 800, color: '#94a3b8' }}>0% da Jornada | XP: 34/2000</small>
+          </div>
+          <div className="level-hexagon">
+             <span>Nível</span>
+             1
+          </div>
+        </div>
+
+        <div className="header-nav-mini">
+          {(isAdmin || isMediator) && (
+            <button 
+              className={`header-nav-btn-v7 ${showGlobalReport ? 'active' : ''}`}
+              onClick={() => setShowGlobalReport(!showGlobalReport)}
+              title="Registrar Relatório da Mediadora"
+              style={{
+                marginRight: '8px',
+                background: showGlobalReport ? '#f0fdfa' : 'white',
+                color: showGlobalReport ? '#10b981' : '#64748b',
+                borderColor: showGlobalReport ? '#10b981' : '#e2e8f0'
+              }}
+            >
+              <ClipboardList size={18} />
+            </button>
+          )}
+
+          <div className="stats-v7">
+            <div className="stats-pill-red">🔥 0 Dias</div>
+            <div className="stats-pill-yellow">💰 2</div>
+          </div>
+          <div className="header-divider-v7"></div>
+          <button className="header-nav-btn-v7 prev" onClick={(e) => { e.stopPropagation(); handleBack(); }} disabled={activeStep === 0}>
+            <ChevronLeft size={20} />
+          </button>
+          <button className="header-nav-btn-v7 next" onClick={(e) => { e.stopPropagation(); handleNext(); }}>
+            {activeStep === steps.length - 1 ? <Sparkles size={20} /> : <ChevronRight size={20} />}
+          </button>
+          <div className="header-divider-v7"></div>
+          <button className="exit-btn-v7" onClick={onToggle}>
+            <X size={20} />
+          </button>
+        </div>
       </div>
 
-      {/* Main Content Area */}
+      {showGlobalReport && (isAdmin || isMediator) && (
+        <div className="global-report-overlay-v7" style={{ 
+          background: 'white', 
+          margin: '0 20px 20px', 
+          borderRadius: '20px', 
+          padding: '20px',
+          border: '2px solid #10b981',
+          boxShadow: '0 10px 25px rgba(16, 185, 129, 0.1)'
+        }}>
+           <h4 style={{ margin: '0 0 12px', fontSize: '14px', color: '#1e293b', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ClipboardList size={18} /> Relatório da Professora Mediadora
+           </h4>
+           <textarea 
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Descreva o que for relevante sobre o desempenho da Ione nesta aula..."
+              style={{
+                width: '100%',
+                height: '100px',
+                padding: '15px',
+                borderRadius: '15px',
+                border: '1px solid #e2e8f0',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                resize: 'none',
+                marginBottom: '12px',
+                background: '#f8fafc'
+              }}
+           />
+           <div style={{ display: 'flex', gap: '10px' }}>
+              <button 
+                onClick={handleSaveSession}
+                disabled={!note.trim() || isSavingSession}
+                style={{
+                   flex: 1,
+                   padding: '12px',
+                   borderRadius: '12px',
+                   background: '#10b981',
+                   color: 'white',
+                   border: 'none',
+                   fontWeight: 800,
+                   cursor: 'pointer',
+                   opacity: (!note.trim() || isSavingSession) ? 0.5 : 1
+                }}
+              >
+                 {isSavingSession ? 'Salvando...' : 'SALVAR RELATÓRIO ✓'}
+              </button>
+              <button 
+                onClick={() => setShowGlobalReport(false)}
+                style={{
+                   padding: '12px 20px',
+                   borderRadius: '12px',
+                   background: '#f1f5f9',
+                   color: '#64748b',
+                   border: 'none',
+                   fontWeight: 800,
+                   cursor: 'pointer'
+                }}
+              >
+                 FECHAR
+              </button>
+           </div>
+           {sessionSuccess && (
+              <p style={{ color: '#10b981', fontSize: '12px', fontWeight: 800, marginTop: '10px', textAlign: 'center' }}>
+                 ✓ Relatório salvo com sucesso!
+              </p>
+           )}
+        </div>
+      )}
+
+      {/* 3. CONTENT AREA */}
       <div className="activities-v5-main">
-        <div className="step-container-v5">
-          {current.type === 'game' && (
-            <div className="step-card-v5 game-launcher">
-               <div className="game-visual-v5">🎮</div>
-               <h2>Desafio de Palavras</h2>
-               <p>Ganhe XP extra praticando o vocabulário desta lição!</p>
-               <button className="play-btn-v5" onClick={onStartGame} style={{ background: currentColors.accent }}>
-                  Começar Desafio!
-               </button>
-            </div>
-          )}
-
-          {current.type === 'brief' && (
-            <div className="step-card-v5 brief">
-              <div className="brief-header-v5">
-                <div className="brief-mascot-v5">
-                   <img src="https://i.ibb.co/PZNCmrTf/Captura-de-tela-2026-04-24-002158.png" alt="Explorer" />
-                </div>
-                <div className="brief-text-v5">
-                   <span className="step-label-v5">ETAPA 1: PREPARAÇÃO</span>
-                   <h2>Guia de Estudo</h2>
-                </div>
-              </div>
-
-              <div className="brief-content-v5">
-                {isAdmin && (
-                  <button className="admin-edit-btn" onClick={() => setIsEditingBrief(!isEditingBrief)}>
-                    {isEditingBrief ? 'X Cancelar' : '✎ Editar Conteúdo'}
-                  </button>
-                )}
-
-                {isEditingBrief ? (
-                  <div className="brief-editor-v5">
-                    <textarea 
-                      value={tempBrief}
-                      onChange={(e) => setTempBrief(e.target.value)}
-                      className="brief-textarea-v5"
-                      autoFocus
-                    />
-                    <button 
-                      className="save-btn-v5"
-                      onClick={async () => {
-                        const success = await handleUpdateUnitContent({ brief: tempBrief, external_links: tempLinks });
-                        if (success) setIsEditingBrief(false);
-                      }}
-                    >
-                      Salvar Tudo
-                    </button>
-                  </div>
+        {current.type === 'game' && (
+          <div className="mission-horizontal-v7">
+             {/* LEFT SIDE: PREMIUM INTRO */}
+             <div className="mission-intro-section-v7">
+                <span className="mission-tag-v7" style={{ 
+                   background: isCompleted ? '#dcfce7' : '#f1f5f9', 
+                   color: isCompleted ? '#16a34a' : '#475569' 
+                }}>
+                   {isCompleted ? 'MISSÃO COMPLETA' : 'MISSÃO EM ANDAMENTO'}
+                </span>
+                {unit.title.includes('—') ? (
+                   <>
+                      <div className="unit-label-badge-v7">
+                         {unit.title.split('—')[0].trim()}
+                      </div>
+                      <h1 className="mission-subtitle-v7 main-theme">{unit.title.split('—')[1].trim()}</h1>
+                   </>
                 ) : (
-                  <div className="brief-view-v5">
-                     <p className="brief-paragraph-v5">{unit.brief}</p>
-                     
-                     <div className="media-grid-v5">
-                        {unit.external_links?.filter(l => l.label === 'media' || l.label === 'HTML').map((media, idx) => (
-                           <div key={idx} className="media-item-v5">
-                              {media.url.includes('youtube.com') ? (
-                                 <iframe src={media.url.replace('watch?v=', 'embed/')} frameBorder="0" allowFullScreen />
-                              ) : media.label === 'HTML' ? (
-                                 <div dangerouslySetInnerHTML={{ __html: media.url }} />
-                              ) : (
-                                 <img src={media.url} alt="Reference" />
-                              )}
-                           </div>
-                        ))}
-                     </div>
-                  </div>
+                   <h1 className="mission-title-v7 side">{unit.title}</h1>
                 )}
-              </div>
-            </div>
-          )}
+                <p className="mission-sub-v7 side">Pratique o conteúdo desta unidade e teste sua velocidade para ganhar bônus!</p>
+                <div className="mission-perks-v7">
+                   <div className="perk-item-v7">✨ +{current.xp || 200} XP de Bônus</div>
+                   <div className="perk-item-v7">🏆 Troféu de Conclusão</div>
+                </div>
+             </div>
 
-          {current.type === 'embed' && (
-            <div className="step-card-v5 embed">
-               <div className="embed-header-v5">
-                  <div className="embed-info-v5">
-                     <span className="step-label-v5">ATIVIDADE INTERATIVA</span>
-                     <h2>Mão na Massa!</h2>
-                  </div>
-                  <button className="fullscreen-btn-v5" onClick={() => previewRef.current?.open()}>
-                     <Maximize size={18} />
-                     Tela Cheia
-                  </button>
-               </div>
-               
-               <div className="embed-container-v5">
-                  <EmbedPreview
-                    ref={previewRef}
-                    url={(current as EmbedStep).url}
-                    title={`Atividade ${(current as EmbedStep).idx + 1}`}
-                    thumbnailUrl={unit.embed_preview_images?.[(current as EmbedStep).idx]}
-                  />
-               </div>
-            </div>
-          )}
+             {/* RIGHT SIDE: CARD WITH ICON */}
+             <div className="game-launcher-mission">
+                <div className="mission-center-v7">
+                   <div className="game-visual-v7">
+                      <img src={wordGameImg} alt="Word Game" className="word-game-icon-3d" />
+                   </div>
+                </div>
+                <div className="mission-footer-v7">
+                   <h1 className="mission-footer-title">{current.title || 'Desafio da Unidade'}</h1>
+                   <p className="mission-mechanic">Mecânica: {current.mechanic || 'Atividade Interativa'}</p>
+                   <button className="play-btn-v7-mission" onClick={onStartGame} style={{ background: currentColors.accent }}>
+                      Começar Missão!
+                   </button>
+                </div>
+             </div>
+          </div>
+        )}
 
-          {current.type === 'question' && (
-            <div className="step-card-v5 question-step">
-               <QuestionBlock 
-                question={(current as QuestionStep).q}
-                index={(current as QuestionStep).idx}
-                unitId={unit.id}
-                color={unit.color}
-                isDone={!!answers[`${unit.id}-${(current as QuestionStep).idx}`]?.is_done}
-                savedAnswer={answers[`${unit.id}-${(current as QuestionStep).idx}`]?.answer_value || ''}
-                onSaveAnswer={(val) => onSaveAnswer((current as QuestionStep).idx, val)}
-                isAdmin={isAdmin}
-                onEdit={(newQ) => editQuestion((current as QuestionStep).idx, newQ)}
-                onDelete={() => deleteQuestion((current as QuestionStep).idx)}
-                isNew={(current as QuestionStep).q.q === 'Nova Pergunta'}
-              />
-              {isAdmin && (
-                <button className="admin-add-item-v5" onClick={() => {
-                  const type = window.confirm('Adicionar QUESTÃO?') ? 'q' : 'e';
-                  if (type === 'q') {
-                    const newQ: Question = { q: 'Nova Pergunta', type: 'mc', opts: ['Opção 1'], mediator: '', hint: '' };
-                    handleUpdateUnitContent({ questions: [...unit.questions, newQ] });
-                  }
-                }}>+ Adicionar Questão</button>
-              )}
-            </div>
-          )}
+        {current.type === 'brief' && (
+          <div className="mission-horizontal-v7 brief-step">
+             <div className="mission-intro-section-v7">
+                <span className="mission-tag-v7" style={{ 
+                   background: isCompleted ? '#dcfce7' : '#fef3c7', 
+                   color: isCompleted ? '#16a34a' : '#92400e' 
+                }}>
+                   {isCompleted ? 'MISSÃO COMPLETA' : 'GUIA DE ESTUDO'}
+                </span>
+                <div className="unit-label-badge-v7">{unit.title.split('—')[0].trim()}</div>
+                <h1 className="mission-subtitle-v7 main-theme">{unit.title.split('—')[1].trim()}</h1>
+                <p className="mission-sub-v7 side">Mergulhe no conteúdo teórico para se preparar para os desafios práticos.</p>
+                <div className="mission-perks-v7">
+                   <div className="perk-item-v7">📖 Leitura Atenta</div>
+                   <div className="perk-item-v7">💡 Dicas Importantes</div>
+                </div>
+             </div>
+             
+             <div className="game-launcher-mission">
+                <div className="mission-center-v7">
+                   {(() => {
+                      const mainMedia = unit.external_links?.find(l => l.label === 'media' || l.label === 'video_file' || l.label === 'video' || l.label === 'HTML');
+                      if (!mainMedia) return <img src={wordGameImg} alt="Mascot" className="word-game-icon-3d" />;
+                      if (mainMedia.label === 'video_file' || mainMedia.url.toLowerCase().endsWith('.mp4')) return <VideoPlayerV5 media={mainMedia} />;
+                      return <img src={mainMedia.url} alt="Mascot" className="word-game-icon-3d" />;
+                   })()}
+                </div>
+                <div className="mission-footer-v7">
+                   <h1 className="mission-footer-title">Guia da Unidade</h1>
+                   <button className="play-btn-v7-mission" onClick={() => setIsEditingBrief(!isEditingBrief)} style={{ background: '#f59e0b' }}>
+                      {isAdmin ? 'Editar Conteúdo' : 'Explorar Guia'}
+                   </button>
+                </div>
+             </div>
+          </div>
+        )}
 
-          {current.type === 'report' && (
-            <div className="step-card-v5 report">
-               <div className="report-header-v5">
-                  <div className="report-icon-v5"><FileText size={32} /></div>
-                  <h2>Relatório Final</h2>
-                  <p>Conte-nos como foi o desempenho da Ione hoje.</p>
-               </div>
-               <textarea 
-                 className="report-textarea-v5"
-                 value={note}
-                 onChange={(e) => setNote(e.target.value)}
-                 placeholder="Ex: Ione demonstrou facilidade com as cores..."
-               />
-               <button 
-                 className={`finish-btn-v5 ${sessionSuccess ? 'success' : ''}`}
-                 onClick={handleSaveSession}
-                 disabled={!note.trim() || isSavingSession}
-                 style={{ background: sessionSuccess ? '#10b981' : currentColors.main }}
-               >
-                 {isSavingSession ? 'Salvando...' : sessionSuccess ? 'Lição Concluída! 🎉' : 'Finalizar e Salvar'}
-               </button>
-            </div>
-          )}
-        </div>
-      </div>
+        {current.type === 'embed' && (
+          <div className={`mission-horizontal-v7 embed-step ${((current as EmbedStep).title?.toLowerCase().includes('video') || (current as EmbedStep).title?.toLowerCase().includes('aula')) ? 'is-video' : 'is-activity'}`}>
+             <div className="mission-intro-section-v7">
+                <span className="mission-tag-v7" style={{ 
+                   background: isCompleted ? '#dcfce7' : ((current as EmbedStep).title?.toLowerCase().includes('video') || (current as EmbedStep).title?.toLowerCase().includes('aula')) ? '#e0f2fe' : '#fef3c7', 
+                   color: isCompleted ? '#16a34a' : ((current as EmbedStep).title?.toLowerCase().includes('video') || (current as EmbedStep).title?.toLowerCase().includes('aula')) ? '#0369a1' : '#92400e' 
+                }}>
+                   {isCompleted ? 'MISSÃO COMPLETA' : ((current as EmbedStep).title?.toLowerCase().includes('video') || (current as EmbedStep).title?.toLowerCase().includes('aula')) ? 'VÍDEO AULA' : 'ATIVIDADE INTERATIVA'}
+                </span>
+                <div className="unit-label-badge-v7">{unit.title.split('—')[0].trim()}</div>
+                <h1 className="mission-subtitle-v7 main-theme">{unit.title.split('—')[1].trim()}</h1>
+                <p className="mission-sub-v7 side">
+                   {((current as EmbedStep).title?.toLowerCase().includes('video') || (current as EmbedStep).title?.toLowerCase().includes('aula')) 
+                     ? 'Assista ao vídeo interativo para reforçar seu aprendizado.' 
+                     : 'Divirta-se praticando com este desafio interativo!'}
+                </p>
+             </div>
 
-      {/* Floating Control Bar */}
-      <div className="activities-v5-footer">
-        <button 
-          className="nav-control-btn-v5 prev"
-          onClick={handleBack}
-          disabled={isFirst}
-        >
-          <ArrowLeft size={20} />
-          Anterior
-        </button>
+             <div className="game-launcher-mission embed-card-v7">
+                <div className="mission-center-v7">
+                   <EmbedPreview
+                     key={(current as EmbedStep).url}
+                     ref={previewRef}
+                     url={(current as EmbedStep).url}
+                     title={(current as EmbedStep).title || `Atividade ${(current as EmbedStep).idx + 1}`}
+                     thumbnailUrl={unit.embed_preview_images?.[(current as EmbedStep).idx]}
+                     maskIcon={(current as EmbedStep).maskIcon || ((current as EmbedStep).idx === 0 ? memoryGameImg : undefined)}
+                   />
+                </div>
+                <div className="mission-footer-v7">
+                   <h1 className="mission-footer-title">{(current as EmbedStep).title || 'Atividade'}</h1>
+                   <p className="mission-mechanic">Status: Disponível para Prática</p>
+                </div>
+             </div>
+          </div>
+        )}
 
-        <div className="step-info-v5">
-           Passo {activeStep + 1} de {steps.length}
-        </div>
+        {current.type === 'question' && (
+          <div className="mission-horizontal-v7 question-step">
+             <div className="game-launcher-mission question-mascot-card">
+                <div className="mission-center-v7">
+                   <img src={wordGameImg} alt="Mascot" className="word-game-icon-3d mini" />
+                </div>
+             </div>
+             <div className="mission-intro-section-v7 question-info">
+                <span className="mission-tag-v7" style={{ background: '#dcfce7', color: '#15803d' }}>DESAFIO PRÁTICO</span>
+                <div className="question-wrapper-horizontal">
+                   <QuestionBlock 
+                     question={(current as QuestionStep).q}
+                     index={(current as QuestionStep).idx}
+                     unitId={unit.id}
+                     color={unit.color}
+                     isDone={!!answers[`${unit.id}-${(current as QuestionStep).idx}`]?.is_done}
+                     savedAnswer={answers[`${unit.id}-${(current as QuestionStep).idx}`]?.answer_value || ''}
+                     onSaveAnswer={(val) => onSaveAnswer((current as QuestionStep).idx, val)}
+                     isAdmin={isAdmin}
+                     onEdit={(newQ) => editQuestion((current as QuestionStep).idx, newQ)}
+                     onDelete={() => deleteQuestion((current as QuestionStep).idx)}
+                     isNew={(current as QuestionStep).q.q === 'Nova Pergunta'}
+                   />
+                </div>
+             </div>
+          </div>
+        )}
 
-        <button 
-          className="nav-control-btn-v5 next"
-          onClick={handleNext}
-          disabled={isLast}
-          style={{ background: currentColors.accent }}
-        >
-          Próximo
-          <ChevronRight size={20} />
-        </button>
+        {current.type === 'report' && (
+          <div className="mission-horizontal-v7 report-step">
+             <div className="game-launcher-mission report-mascot-card">
+                <div className="mission-center-v7">
+                   <img src={wordGameImg} alt="Mascot" className="word-game-icon-3d mini" />
+                </div>
+             </div>
+             <div className="mission-intro-section-v7 report-info">
+                <span className="mission-tag-v7" style={{ background: '#f1f5f9', color: '#475569' }}>RELATÓRIO FINAL</span>
+                <h1 className="mission-title-v7 side">Como foi hoje?</h1>
+                <textarea 
+                   className="report-textarea-v7"
+                   value={note}
+                   onChange={(e) => setNote(e.target.value)}
+                   placeholder="Ex: Ione demonstrou facilidade com as cores..."
+                />
+                <button 
+                   className={`finish-btn-v7 ${sessionSuccess ? 'success' : ''}`}
+                   onClick={handleSaveSession}
+                   disabled={!note.trim() || isSavingSession}
+                   style={{ background: sessionSuccess ? '#10b981' : currentColors.main }}
+                >
+                   {isSavingSession ? 'Salvando...' : sessionSuccess ? 'Concluído! 🎉' : 'Finalizar e Salvar'}
+                </button>
+             </div>
+          </div>
+        )}
+
+        {isEditingBrief && (
+           <div className="brief-editor-v5-modern premium-overlay">
+             <div className="editor-container-v7">
+                <div className="editor-header-v7">
+                   <h2>Editor do Guia de Estudo</h2>
+                   <p>Personalize o texto e gerencie as mídias desta unidade.</p>
+                </div>
+
+                <div className="editor-toolbar-v5">
+                   <button onClick={() => insertTag('<b>', '</b>')} title="Negrito"><b>B</b></button>
+                   <button onClick={() => insertTag('<i>', '</i>')} title="Itálico"><i>I</i></button>
+                   <button onClick={() => insertTag('<h3 style="font-family: serif">', '</h3>')} title="Título">H</button>
+                   <button onClick={() => insertTag('<p style="font-size: 1.2rem">', '</p>')} title="Texto Grande">T+</button>
+                   <button onClick={() => insertTag('<ul><li>', '</li></ul>')} title="Lista">• Lista</button>
+                   <button onClick={() => setTempBrief(tempBrief + '<br/>')} title="Pular Linha">↵</button>
+                </div>
+
+                <textarea 
+                  value={tempBrief}
+                  onChange={(e) => setTempBrief(e.target.value)}
+                  className="brief-textarea-v5-modern"
+                  placeholder="Escreva o guia aqui (suporta HTML)..."
+                  autoFocus
+                  id="brief-editor-textarea"
+                />
+
+                {/* Media Manager */}
+                <div className="media-manager-v5">
+                   <h4>Gerenciar Mídias (Imagens, GIFs, Vídeos, HTML)</h4>
+                   <div className="media-edit-list">
+                      {tempLinks.map((link, idx) => (
+                         <div key={idx} className="media-edit-row">
+                            <div className="media-preview-mini">
+                               {link.label === 'HTML' ? '<div>' : link.url.includes('youtube.com') ? '📺' : '🖼️'}
+                            </div>
+                            <div className="media-edit-controls">
+                               <input 
+                                  value={link.url} 
+                                  onChange={(e) => {
+                                     const newLinks = [...tempLinks];
+                                     newLinks[idx].url = e.target.value;
+                                     setTempLinks(newLinks);
+                                  }}
+                                  placeholder="URL da mídia ou código HTML"
+                                  className="media-url-input"
+                               />
+                               <div className="media-row-tools">
+                                  <select 
+                                     value={link.label}
+                                     onChange={(e) => {
+                                        const newLinks = [...tempLinks];
+                                        newLinks[idx].label = e.target.value;
+                                        setTempLinks(newLinks);
+                                     }}
+                                  >
+                                     <option value="media">Imagem / GIF</option>
+                                     <option value="HTML">Código HTML</option>
+                                     <option value="video">YouTube</option>
+                                     <option value="video_file">Vídeo (MP4)</option>
+                                  </select>
+                                  
+                                  <div className="width-control-v5">
+                                     <span>Largura:</span>
+                                     <input 
+                                        type="range" min="10" max="100" step="5"
+                                        value={link.width?.replace('%', '') || '100'}
+                                        onChange={(e) => {
+                                           const newLinks = [...tempLinks];
+                                           newLinks[idx].width = e.target.value + '%';
+                                           setTempLinks(newLinks);
+                                        }}
+                                     />
+                                     <span className="width-val">{link.width || '100%'}</span>
+                                  </div>
+
+                                  <div className="media-playback-tools-v5">
+                                     <label className="playback-check">
+                                        <input 
+                                           type="checkbox" 
+                                           checked={link.loop || false} 
+                                           onChange={(e) => {
+                                              const newLinks = [...tempLinks];
+                                              newLinks[idx].loop = e.target.checked;
+                                              setTempLinks(newLinks);
+                                           }}
+                                        />
+                                        <span>Loop</span>
+                                     </label>
+                                     <button className="del-media-btn" onClick={() => setTempLinks(tempLinks.filter((_, i) => i !== idx))}>
+                                        <Trash2 size={14} />
+                                     </button>
+                                  </div>
+                               </div>
+                            </div>
+                         </div>
+                      ))}
+                   </div>
+                   <button className="add-media-btn" onClick={() => setTempLinks([...tempLinks, { label: 'media', url: '' }])}>
+                      <Plus size={14} /> Adicionar Nova Mídia
+                   </button>
+                </div>
+
+                <div className="editor-actions-v5">
+                   <button className="cancel-btn-v5" onClick={() => setIsEditingBrief(false)}>Cancelar</button>
+                   <button 
+                     className={`save-btn-v5 ${saveStatus}`}
+                     disabled={saveStatus === 'saving'}
+                     onClick={async () => {
+                        setSaveStatus('saving');
+                        const result = await handleUpdateUnitContent({ brief: tempBrief, external_links: tempLinks });
+                        if (result.success) {
+                           setSaveStatus('success');
+                           setTimeout(() => {
+                              setSaveStatus('idle');
+                              setIsEditingBrief(false);
+                           }, 1000);
+                        } else {
+                           setSaveStatus('error');
+                        }
+                     }}
+                   >
+                      {saveStatus === 'saving' ? 'Salvando...' : saveStatus === 'success' ? '✅ Salvo!' : 'Salvar Alterações'}
+                   </button>
+                </div>
+             </div>
+           </div>
+        )}
+
+        {!unit.hide_nav && (
+          <div className="step-counter-v7">
+             {activeStep + 1} / {steps.length}
+          </div>
+        )}
       </div>
 
       {stepReward && (
@@ -388,13 +756,15 @@ const StepNavigation: React.FC<{
   );
 };
 
+
 interface UnitCardProps {
   unit: Unit;
   answers: Record<string, any>;
   onSaveAnswer: (qIdx: number, val: string) => Promise<boolean>;
   onSaveSession: (note: string) => Promise<boolean>;
   isAdmin?: boolean;
-  onUpdateUnit?: (id: string, updates: Partial<Unit>) => Promise<boolean>;
+  isMediator?: boolean;
+  onUpdateUnit?: (id: string, updates: Partial<Unit>) => Promise<{ success: boolean; error?: string }>;
   isExpanded: boolean;
   onToggle: () => void;
   onStartGame?: () => void;
@@ -443,7 +813,7 @@ const getUnitIcon = (title: string, isLocked: boolean = false) => {
 };
 
 export const UnitCard: React.FC<UnitCardProps> = ({ 
-  unit, answers, onSaveAnswer, onSaveSession, isAdmin, onUpdateUnit, isExpanded, onToggle, onStartGame, onGoHome, isLocked, isFirstUnit, id
+  unit, answers, onSaveAnswer, onSaveSession, isAdmin, isMediator, onUpdateUnit, isExpanded, onToggle, onStartGame, onGoHome, isLocked, isFirstUnit, id
 }) => {
   // const [note, setNote] = useState('');
   // const [sessionSuccess, setSessionSuccess] = useState(false);
@@ -459,8 +829,15 @@ export const UnitCard: React.FC<UnitCardProps> = ({
 
   const handleUpdateUnitContent = async (updates: Partial<Unit>) => {
     if (onUpdateUnit) {
-      await onUpdateUnit(unit.id, updates);
+      try {
+        const result = await onUpdateUnit(unit.id, updates);
+        return result;
+      } catch (err: any) {
+        console.error('Error updating unit:', err);
+        return { success: false, error: err.message };
+      }
     }
+    return { success: false, error: 'Função de atualização não definida.' };
   };
 
   const deleteQuestion = (idx: number) => {
@@ -510,64 +887,33 @@ export const UnitCard: React.FC<UnitCardProps> = ({
   const isComplete = questionsDone === unit.questions.length;
 
   return (
-    <div id={id} className={`adventure-card ${isExpanded ? 'expanded' : ''} ${isLocked ? 'locked' : ''}`} style={{ borderBottomColor: currentColors.main, '--unit-color': currentColors.main } as any}>
-      <div className="unit-hdr-v4" onClick={() => !isLocked && onToggle()}>
-        <button 
-          className="unit-home-btn-v4"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (isLocked) return;
-            if (onGoHome) onGoHome();
-          }}
-          style={{ background: isLocked ? '#94a3b8' : currentColors.main }}
-          title={isLocked ? "Unidade Bloqueada" : "Voltar ao Início"}
-          disabled={isLocked}
-        >
-          {isLocked ? <X size={20} /> : <Home size={22} />}
-        </button>
+    <div id={id} 
+      className={`lesson-card-v7 ${isExpanded ? 'expanded' : ''} ${isLocked ? 'lock-overlay-v7' : ''} ${!isLocked && !isComplete ? 'active' : ''}`}
+      onClick={() => !isLocked && !isExpanded && onToggle()}
+    >
+      {!isExpanded && (
+        <>
+          <span className="lesson-icon-v7">
+            {getUnitIcon(unit.title, isLocked)}
+          </span>
+          <div className="lesson-title-v7">{unit.title}</div>
+          
+          {!isLocked && !isComplete && (
+            <button className="btn-start-v7">Começar Agora!</button>
+          )}
 
-        <div className="unit-icon-island" style={{ background: currentColors.light, color: currentColors.accent }}>
-          {getUnitIcon(unit.title, isLocked)}
-        </div>
-
-        <div className="unit-content-v4">
-          <div className="unit-header-top-v4">
-            <p className="unit-status-text" style={{ color: currentColors.dark }}>
-              {isComplete ? 'MODULO CONCLUÍDO ✓' : 'MÓDULO EM PROGRESSO'}
-            </p>
-            <h3 className="unit-title-v4">
-              {unit.title}
-            </h3>
-          </div>
-
-          <div className="unit-info-v4">
-            <p className="unit-meta-v4">{unit.sub?.split('·')[0]}</p>
-            
-            <div className="unit-tags-row-v4">
-              {Array.isArray(unit.descriptors) && unit.descriptors.map(tag => (
-                <span key={tag} className="skill-badge-v4" style={{ '--badge-bg': currentColors.accent } as any}>
-                  {getSkillBadge(tag)}
-                </span>
-              ))}
+          {isComplete && (
+            <div className="unit-status-badge-v7" style={{ color: '#10b981', fontWeight: 900, fontSize: '12px' }}>
+              CONCLUÍDO ✓
             </div>
+          )}
 
-            <div className="unit-footer-v4">
-              <div className="unit-progress-bar-v4">
-                <div className="unit-progress-fill-v4" style={{ width: `${(questionsDone/unit.questions.length)*100}%`, background: currentColors.accent }}></div>
-              </div>
-              <span className="unit-progress-text-v4">{questionsDone}/{unit.questions.length}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="unit-chevron-v4">
-           {isLocked ? (
-             <X size={24} className="chev-v4 lock" />
-           ) : (
-             <ChevronDown size={24} className={`chev-v4 ${isExpanded ? 'open' : ''}`} />
-           )}
-        </div>
-      </div>
+          {isLocked && (
+             <Lock size={20} style={{ opacity: 0.5 }} />
+          )}
+        </>
+      )}
+
 
         {isExpanded && (
         <div className="unit-body-v4">
@@ -576,6 +922,7 @@ export const UnitCard: React.FC<UnitCardProps> = ({
             answers={answers} 
             onSaveAnswer={onSaveAnswer}
             isAdmin={isAdmin}
+            isMediator={isMediator}
             editQuestion={editQuestion}
             deleteQuestion={deleteQuestion}
             currentColors={currentColors}
@@ -585,6 +932,7 @@ export const UnitCard: React.FC<UnitCardProps> = ({
             onToggle={onToggle}
             completeLesson={completeLesson}
             isFirstUnit={isFirstUnit}
+            onGoHome={onGoHome}
           />
         </div>
       )}
@@ -609,12 +957,14 @@ export const Activities: React.FC<{
   onSaveAnswer: (uId: string, qIdx: number, val: string) => Promise<boolean>; 
   onSaveSession: (uId: string, note: string) => Promise<boolean>;
   isAdmin?: boolean;
-  onUpdateUnit?: (uId: string, updates: Partial<Unit>) => Promise<boolean>;
+  isMediator?: boolean;
+  onUpdateUnit?: (uId: string, updates: Partial<Unit>) => Promise<{ success: boolean; error?: string }>;
   onCreateUnit?: (title: string) => Promise<boolean>;
   onGameOver?: (score: number, words: number) => void;
   initialExpandedId?: string | null;
   onGoHome?: () => void;
-}> = ({ units, answers, onSaveAnswer, onSaveSession, isAdmin, onUpdateUnit, onCreateUnit, onGameOver, initialExpandedId, onGoHome }) => {
+  onToggle?: () => void;
+}> = ({ units, answers, onSaveAnswer, onSaveSession, isAdmin, isMediator, onUpdateUnit, onCreateUnit, onGameOver, initialExpandedId, onGoHome, onToggle }) => {
   const [expandedUnitId, setExpandedUnitId] = useState<string | null>(initialExpandedId ?? null);
   const [activeGameUnitId, setActiveGameUnitId] = useState<string | null>(null);
 
@@ -629,6 +979,15 @@ export const Activities: React.FC<{
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
+
+  React.useEffect(() => {
+    if (expandedUnitId) {
+      document.body.classList.add('immersive-mode');
+    } else {
+      document.body.classList.remove('immersive-mode');
+    }
+    return () => document.body.classList.remove('immersive-mode');
+  }, [expandedUnitId]);
 
   React.useEffect(() => {
     if (expandedUnitId) {
@@ -656,6 +1015,7 @@ export const Activities: React.FC<{
   };
 
   const sortedUnits = useMemo(() => {
+    if (!units || !Array.isArray(units)) return [];
     return [...units].sort((a, b) => {
       const numA = parseInt(a.title.match(/\d+/)?.[0] || '999');
       const numB = parseInt(b.title.match(/\d+/)?.[0] || '999');
@@ -672,16 +1032,72 @@ export const Activities: React.FC<{
 
   return (
     <div className={`screen activities-screen ${expandedUnitId ? 'has-expanded' : ''}`}>
-      <div className="unit-grid-container">
-        {sortedUnits.map((unit, index) => {
-          const isFirst = index === 0;
-          const prevUnit = index > 0 ? sortedUnits[index - 1] : null;
-          
-          // Check if previous unit is complete
-          const prevComplete = prevUnit ? prevUnit.questions.every((_, i) => answers[`${prevUnit.id}-${i}`]?.is_done) : true;
-          const isLocked = !isFirst && !prevComplete && !isAdmin;
+      {!expandedUnitId ? (
+        <div className="dashboard-v7-wrapper">
+          <div className="profile-header-image-style">
+            <div className="avatar-and-name">
+              <div className="avatar-v7">
+                 <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHpueGtxZ2txZ2txZ2txZ2txZ2txZ2txZ2txZ2txZ2txZ2txZ2txJmVwPXYxX2ludGVybmFs_giF_by_id&ct=s/3o7TKMGfN9qN3Z4Jq0/giphy.gif" alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+              <div className="user-text-v7">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                   <h2>Oi, Ione!</h2>
+                   <span style={{ fontSize: '24px' }}>☀️</span>
+                </div>
+                <div className="xp-bar-mini">
+                   <div className="xp-fill-mini" style={{ width: '15%' }}></div>
+                </div>
+                <small>0% da Jornada | XP: 34/2000</small>
+              </div>
+              <div className="level-hexagon">
+                 <span>Nível</span>
+                 1
+              </div>
+            </div>
+            <div className="stats-v7">
+              <div className="stats-pill-red">🔥 0 Dias <small style={{ fontSize: '8px', display: 'block', opacity: 0.7 }}>CHAMA DE SEQUÊNCIA</small></div>
+              <div className="stats-pill-yellow">💰 2 <small style={{ fontSize: '8px', display: 'block', opacity: 0.7 }}>COINS</small></div>
+            </div>
+          </div>
 
-          return (
+          <div className="mission-banner-v7">
+            <span className="jornada-badge-v7">JORNADA</span>
+            <h1>Mission: Módulo 1 — Primeiros Passos</h1>
+            <p>Complete as {sortedUnits.length} aulas para ganhar o troféu de bronze!</p>
+          </div>
+
+          <div className="lessons-grid-v7">
+            {sortedUnits.map((unit, index) => {
+              const isFirst = index === 0;
+              const prevUnit = index > 0 ? sortedUnits[index - 1] : null;
+              const prevComplete = prevUnit ? prevUnit.questions.every((_, i) => answers[`${prevUnit.id}-${i}`]?.is_done) : true;
+              const isLocked = !isAdmin && (unit.is_locked || (!isFirst && !prevComplete));
+
+              return (
+                <UnitCard 
+                  key={unit.id} 
+                  id={`unit-${unit.id}`}
+                  unit={unit} 
+                  answers={answers}
+                  onSaveAnswer={(qIdx, val) => onSaveAnswer(unit.id, qIdx, val)}
+                  onSaveSession={(note) => onSaveSession(unit.id, note)}
+                  isAdmin={isAdmin}
+                  isMediator={isMediator}
+                  onUpdateUnit={onUpdateUnit}
+                  isExpanded={expandedUnitId === unit.id}
+                  onToggle={() => setExpandedUnitId(expandedUnitId === unit.id ? null : unit.id)}
+                  onStartGame={() => setActiveGameUnitId(unit.id)}
+                  onGoHome={onGoHome || (() => {})}
+                  isLocked={isLocked}
+                  isFirstUnit={isFirst}
+                />
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="unit-grid-container expanded-view">
+          {sortedUnits.filter(u => u.id === expandedUnitId).map((unit) => (
             <UnitCard 
               key={unit.id} 
               id={`unit-${unit.id}`}
@@ -690,27 +1106,47 @@ export const Activities: React.FC<{
               onSaveAnswer={(qIdx, val) => onSaveAnswer(unit.id, qIdx, val)}
               onSaveSession={(note) => onSaveSession(unit.id, note)}
               isAdmin={isAdmin}
+              isMediator={isMediator}
               onUpdateUnit={onUpdateUnit}
-              isExpanded={expandedUnitId === unit.id}
-              onToggle={() => setExpandedUnitId(expandedUnitId === unit.id ? null : unit.id)}
+              isExpanded={true}
+              onToggle={() => setExpandedUnitId(null)}
               onStartGame={() => setActiveGameUnitId(unit.id)}
-              onGoHome={onGoHome}
-              isLocked={isLocked}
-              isFirstUnit={isFirst}
+              onGoHome={onGoHome || (() => {})}
+              isLocked={false}
+              isFirstUnit={false}
             />
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
 
       {activeGameUnitId && (
         <div className="game-screen-overlay">
-          <WordFallGame 
-            unitId={activeGameUnitId} 
-            onGameOver={(s, w) => {
-              if (onGameOver) onGameOver(s, w);
-            }}
-            onBack={() => setActiveGameUnitId(null)}
-          />
+          {(() => {
+            const unit = sortedUnits.find(u => u.id === activeGameUnitId);
+            const fallbackWords = [
+              { pt: 'Colher', en: 'Spoon', icon: '🥄' },
+              { pt: 'Garfo', en: 'Fork', icon: '🍴' },
+              { pt: 'Faca', en: 'Knife', icon: '🔪' },
+              { pt: 'Prato', en: 'Plate', icon: '🍽️' },
+              { pt: 'Copo', en: 'Glass', icon: '🥛' },
+              { pt: 'Panela', en: 'Pot', icon: '🍲' },
+              { pt: 'Geladeira', en: 'Fridge', icon: '🧊' },
+              { pt: 'Fogão', en: 'Stove', icon: '🔥' },
+              { pt: 'Forno', en: 'Oven', icon: '⏲️' },
+              { pt: 'Pia', en: 'Sink', icon: '🚰' }
+            ];
+            
+            return (
+              <WordFallGame 
+                unitTitle={unit?.title || 'Desafio de Digitação'}
+                words={unit?.game_words && unit.game_words.length > 0 ? unit.game_words : fallbackWords} 
+                onGameOver={(s, w) => {
+                  if (onGameOver) onGameOver(s, w);
+                }}
+                onBack={() => setActiveGameUnitId(null)}
+              />
+            );
+          })()}
         </div>
       )}
 

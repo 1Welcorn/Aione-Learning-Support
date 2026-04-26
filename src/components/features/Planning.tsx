@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import type { Unit, Question } from '../../types';
-import { Printer, Save, CheckCircle, Trash2, Plus } from 'lucide-react';
+import type { Unit, Question, EmbedActivity } from '../../types';
+import { Printer, Save, CheckCircle, Trash2, Plus, Lock, Unlock, ClipboardList } from 'lucide-react';
 import { COLORS } from '../../constants';
 import { QuestionBlock } from './QuestionBlock';
 
@@ -8,258 +8,182 @@ interface PlanningProps {
   units: Unit[];
   isAdmin: boolean;
   settings: any;
-  onUpdateUnit: (id: string, updates: Partial<Unit>) => Promise<boolean>;
+  onUpdateUnit: (id: string, updates: Partial<Unit>) => Promise<{ success: boolean; error?: string }>;
   onEditDetails: (id: string) => void;
 }
 
 const AdminUnitResourceRow: React.FC<{ 
   unit: Unit, 
-  onSave: (id: string, updates: Partial<Unit>) => Promise<boolean>,
-  onEditDetails: (id: string) => void
-}> = ({ unit, onSave, onEditDetails }) => {
-  const [embedUrls, setEmbedUrls] = useState<string[]>(unit.embed_urls || []);
-  const [questions, setQuestions] = useState<Question[]>(unit.questions || []);
-  const [descText, setDescText] = useState(unit.descriptors?.join(', ') || '');
-  const [vocabulary, setVocabulary] = useState<string[]>(unit.vocabulary_list || []);
-  const [newWord, setNewWord] = useState('');
-  const [isSaved, setIsSaved] = useState(false);
+  sessions: Session[],
+  onSave: (id: string, updates: Partial<Unit>) => Promise<{ success: boolean; error?: string }>,
+  onEditDetails: (id: string) => void,
+  onSaveSession: (unitId: string, note: string) => Promise<boolean>
+}> = ({ unit, sessions, onSave, onEditDetails, onSaveSession }) => {
+  const [showReports, setShowReports] = useState(false);
+  const [newNote, setNewNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Sincronizar estado local se a prop unit mudar
-  React.useEffect(() => {
-    setEmbedUrls(unit.embed_urls || []);
-    setQuestions(unit.questions || []);
-    setDescText(unit.descriptors?.join(', ') || '');
-    setVocabulary(unit.vocabulary_list || []);
-  }, [unit]);
+  const unitSessions = sessions.filter(s => s.unit_id === unit.id);
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    const descs = descText.split(',').map((v: string) => v.trim()).filter(Boolean);
-    
-    const success = await onSave(unit.id, {
-      embed_urls: embedUrls,
-      questions: questions,
-      descriptors: descs,
-      vocabulary_list: vocabulary
-    });
-    
-    setIsSaving(false);
-    if (success) {
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 3000);
-    }
-  };
-
-  const removeQuestion = (idx: number) => {
-    if (window.confirm('Excluir esta pergunta permanentemente?')) {
-      setQuestions((prev: Question[]) => prev.filter((_, i) => i !== idx));
-    }
-  };
-
-  const removeEmbed = (idx: number) => {
-    if (window.confirm('Excluir este link interativo?')) {
-      setEmbedUrls((prev: string[]) => prev.filter((_, i) => i !== idx));
-    }
-  };
-
-  const clearAllEmbeds = () => {
-    if (window.confirm('Deseja excluir TODAS as atividades interativas desta unidade?')) {
-      setEmbedUrls([]);
-    }
-  };
-
-  const clearAllQuestions = () => {
-    if (window.confirm('Deseja excluir TODAS as perguntas desta unidade?')) {
-      setQuestions([]);
-    }
+  const handleAddReport = async () => {
+     if (!newNote.trim()) return;
+     setIsSaving(true);
+     const success = await onSaveSession(unit.id, newNote);
+     if (success) {
+        setNewNote('');
+        setShowReports(true);
+     }
+     setIsSaving(false);
   };
 
   return (
-    <div className="admin-unit-card">
-      <div className="admin-unit-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="admin-unit-card-simple" style={{ background: 'white', borderRadius: '16px', border: '1px solid #f1f5f9', marginBottom: '12px', overflow: 'hidden' }}>
+      <div className="admin-unit-header-simple" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div className="unit-dot" style={{ background: COLORS[unit.color]?.main || COLORS.emerald?.main || '#10b981' }}></div>
-          <strong>{unit.title}</strong>
-        </div>
-        <button 
-          className="admin-edit-details-btn" 
-          onClick={() => onEditDetails(unit.id)}
-          style={{ 
-            fontSize: '11px', 
-            fontWeight: '800', 
-            padding: '6px 12px', 
-            borderRadius: '8px', 
-            background: '#f1f5f9', 
-            color: '#475569',
-            border: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          EDITAR DETALHES ⚙️
-        </button>
-      </div>
-      
-      {/* --- INTERATIVAS --- */}
-      <div className="admin-form-group">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <label style={{ margin: 0 }}>Atividades Interativas ({embedUrls.length})</label>
-          {embedUrls.length > 0 && (
-            <button className="text-danger-btn" onClick={clearAllEmbeds} style={{ fontSize: '11px' }}>
-              Limpar Interativas
-            </button>
-          )}
-        </div>
-        <div className="admin-items-list">
-          {embedUrls.length === 0 ? (
-            <div className="empty-mini">Nenhuma atividade interativa.</div>
-          ) : (
-            embedUrls.map((url: string, i: number) => (
-              <div key={i} className="admin-item-row">
-                <div className="admin-item-text truncate">{url}</div>
-                <button className="admin-item-del" title="Excluir link" onClick={() => removeEmbed(i)}>
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))
-          )}
-        </div>
-        <button className="admin-add-btn" onClick={() => {
-          const url = window.prompt('Cole a URL do Wordwall/Embed:');
-          if (url) setEmbedUrls([...embedUrls, url]);
-        }}>
-          <Plus size={14} /> Adicionar Link Interativo
-        </button>
-      </div>
-
-      {/* --- PERGUNTAS --- */}
-      <div className="admin-form-group">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <label style={{ margin: 0 }}>Perguntas da Lição ({questions.length})</label>
-          {questions.length > 0 && (
-            <button className="text-danger-btn" onClick={clearAllQuestions} style={{ fontSize: '11px' }}>
-              Limpar Perguntas
-            </button>
-          )}
-        </div>
-        <div className="admin-items-list-modern">
-          {questions.length === 0 ? (
-            <div className="empty-mini">Nenhuma pergunta cadastrada.</div>
-          ) : (
-            questions.map((q: Question, i: number) => (
-              <QuestionBlock 
-                key={i}
-                question={q}
-                index={i}
-                unitId={unit.id}
-                color={unit.color}
-                isAdmin={true}
-                onEdit={(newQ) => {
-                  const next = [...questions];
-                  next[i] = newQ;
-                  setQuestions(next);
-                }}
-                onDelete={() => removeQuestion(i)}
-                isNew={q.q === 'Nova Pergunta'}
-              />
-            ))
-          )}
-        </div>
-        <button className="admin-add-btn premium" onClick={() => {
-          const newQ: Question = { 
-            q: 'Nova Pergunta', 
-            type: 'mc', 
-            opts: ['Opção 1'],
-            mediator: 'Instrução para mediadora...', 
-            hint: 'Dica para a aluna...' 
-          };
-          setQuestions([...questions, newQ]);
-        }}>
-          <Plus size={14} /> Adicionar Pergunta (Estilo Google Forms)
-        </button>
-      </div>
-
-      <div className="admin-form-group">
-        <label>Descritores BNCC (separados por vírgula)</label>
-        <input 
-          type="text" 
-          placeholder="D3, D5, D12..."
-          value={descText}
-          onChange={(e) => setDescText(e.target.value)}
-          className="admin-input-full"
-        />
-      </div>
-
-      {/* --- VOCABULARY MANAGER --- */}
-      <div className="admin-form-group">
-        <label>Vocabulário do Módulo (Para Word Fall / Games)</label>
-        <div className="vocab-builder-row">
-          <input 
-            type="text" 
-            placeholder="Ex: Refrigerator"
-            value={newWord}
-            onChange={(e) => setNewWord(e.target.value)}
-            className="admin-input-full"
-            style={{ flex: 1, marginBottom: 0 }}
-            onKeyPress={(e) => {
-               if (e.key === 'Enter') {
-                 setVocabulary([...vocabulary, newWord]);
-                 setNewWord('');
-               }
-            }}
-          />
-          <button 
-            className="admin-add-btn" 
-            style={{ width: 'auto', padding: '10px 20px' }}
-            onClick={() => {
-               if (newWord.trim()) {
-                 setVocabulary([...vocabulary, newWord.trim()]);
-                 setNewWord('');
-               }
-            }}
-          >
-            <Plus size={14} /> Add
-          </button>
+          <div className="unit-dot" style={{ width: '12px', height: '12px', borderRadius: '50%', background: COLORS[unit.color]?.main || COLORS.emerald?.main || '#10b981' }}></div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: '10px', fontWeight: 900, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Aula / Unidade</span>
+            <strong style={{ fontSize: '15px', color: '#1e293b' }}>{unit.title}</strong>
+          </div>
         </div>
         
-        <div className="vocab-tags-cloud">
-          {vocabulary.length === 0 ? (
-            <div className="empty-mini">Nenhuma palavra cadastrada.</div>
-          ) : (
-            vocabulary.map((word, i) => (
-              <span key={i} className="vocab-tag">
-                {word}
-                <button className="vocab-tag-del" onClick={() => setVocabulary(vocabulary.filter((_, idx) => idx !== i))}>×</button>
-              </span>
-            ))
-          )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button 
+            onClick={() => setShowReports(!showReports)}
+            className={`admin-report-btn ${showReports ? 'active' : ''}`}
+            title="Ver Relatórios da Mediadora"
+            style={{
+              padding: '10px',
+              borderRadius: '12px',
+              border: '1px solid #e2e8f0',
+              background: showReports ? '#f0fdfa' : 'white',
+              color: showReports ? '#10b981' : '#64748b',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s'
+            }}
+          >
+            <ClipboardList size={18} />
+          </button>
+
+          <button 
+            className={`admin-lock-toggle ${unit.is_locked ? 'locked' : 'unlocked'}`}
+            onClick={async (e) => {
+              e.stopPropagation();
+              const newLockedState = !unit.is_locked;
+              const result = await onSave(unit.id, { is_locked: newLockedState });
+              if (!result.success) {
+                alert('Erro ao ' + (newLockedState ? 'bloquear' : 'desbloquear') + ' unidade: ' + (result.error || 'Erro desconhecido.'));
+              }
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '11px',
+              fontWeight: '800',
+              padding: '8px 14px',
+              borderRadius: '10px',
+              background: unit.is_locked ? '#fee2e2' : '#f8fafc',
+              color: unit.is_locked ? '#ef4444' : '#64748b',
+              border: '1px solid',
+              borderColor: unit.is_locked ? '#fecaca' : '#e2e8f0',
+              cursor: 'pointer'
+            }}
+          >
+            {unit.is_locked ? <Lock size={14} /> : <Unlock size={14} />}
+          </button>
+          
+          <button 
+            className="admin-edit-details-btn-premium" 
+            onClick={() => onEditDetails(unit.id)}
+            style={{ 
+              fontSize: '11px', 
+              fontWeight: '900', 
+              padding: '10px 20px', 
+              borderRadius: '12px', 
+              background: '#1e293b', 
+              color: 'white',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            GERENCIAR ⚙️
+          </button>
         </div>
       </div>
 
-      <button 
-        className={`confirm-session-btn premium ${isSaved ? 'success' : ''}`}
-        onClick={handleSave}
-        disabled={isSaving}
-        style={{ 
-          marginTop: '15px', 
-          width: '100%',
-          background: isSaved ? 'var(--teal)' : COLORS[unit.color]?.main || 'var(--teal)'
-        }}
-      >
-        {isSaving ? (
-          <div className="loader-spinner" style={{ width: '18px', height: '18px' }}></div>
-        ) : isSaved ? (
-          <><CheckCircle size={18} /> Alterações Salvas no Banco!</>
-        ) : (
-          <><Save size={18} /> Salvar Alterações na Unidade</>
-        )}
-      </button>
+      {showReports && (
+        <div className="unit-reports-panel" style={{ padding: '0 16px 16px', borderTop: '1px solid #f8fafc' }}>
+           <div className="reports-history" style={{ marginTop: '16px' }}>
+              <h4 style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '12px' }}>Histórico de Relatórios</h4>
+              {unitSessions.length === 0 ? (
+                 <div style={{ padding: '20px', textAlign: 'center', color: '#cbd5e1', fontSize: '13px', background: '#f8fafc', borderRadius: '12px', marginBottom: '15px' }}>
+                    Nenhum relatório registrado ainda.
+                 </div>
+              ) : (
+                 <div className="sessions-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px' }}>
+                    {unitSessions.map(s => (
+                       <div key={s.id} style={{ padding: '12px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                             <span style={{ fontSize: '10px', fontWeight: 800, color: '#10b981' }}>{s.session_date}</span>
+                             <span style={{ fontSize: '9px', color: '#94a3b8' }}>Professora Mediadora</span>
+                          </div>
+                          <p style={{ fontSize: '13px', color: '#475569', margin: 0, whiteSpace: 'pre-wrap' }}>{s.note}</p>
+                       </div>
+                    ))}
+                 </div>
+              )}
+           </div>
+
+           <div className="new-report-input">
+              <textarea 
+                 value={newNote}
+                 onChange={(e) => setNewNote(e.target.value)}
+                 placeholder="Escreva aqui o relatório da professora mediadora sobre esta atividade..."
+                 style={{ 
+                    width: '100%', 
+                    height: '80px', 
+                    padding: '12px', 
+                    borderRadius: '12px', 
+                    border: '2px solid #f1f5f9', 
+                    fontSize: '13px', 
+                    fontFamily: 'inherit',
+                    resize: 'none',
+                    marginBottom: '10px'
+                 }}
+              />
+              <button 
+                 onClick={handleAddReport}
+                 disabled={!newNote.trim() || isSaving}
+                 style={{ 
+                    width: '100%', 
+                    padding: '10px', 
+                    borderRadius: '10px', 
+                    background: '#10b981', 
+                    color: 'white', 
+                    border: 'none', 
+                    fontWeight: 800, 
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    opacity: (!newNote.trim() || isSaving) ? 0.5 : 1
+                 }}
+              >
+                 {isSaving ? 'Salvando...' : 'SALVAR RELATÓRIO 📋'}
+              </button>
+           </div>
+        </div>
+      )}
     </div>
   );
 };
 
-
-export const Planning: React.FC<PlanningProps> = ({ units, isAdmin, settings, onUpdateUnit, onEditDetails }) => {
+export const Planning: React.FC<PlanningProps> = ({ units, sessions, isAdmin, settings, onUpdateUnit, onEditDetails, onSaveSession }) => {
   const handlePrint = () => {
     window.print();
   };
@@ -280,7 +204,6 @@ export const Planning: React.FC<PlanningProps> = ({ units, isAdmin, settings, on
       </div>
 
       <div className="plan-table-wrap">
-        {/* --- OFFICIAL HEADER (MATCHES IMAGE) --- */}
         <div className="official-document-header">
           <div className="header-top-row">
             <div className="inst-text">
@@ -361,7 +284,6 @@ export const Planning: React.FC<PlanningProps> = ({ units, isAdmin, settings, on
           </tbody>
         </table>
 
-        {/* --- OFFICIAL FOOTER --- */}
         <div className="official-document-footer">
           <div className="signature-row">
             <div className="sig-block">
@@ -388,8 +310,10 @@ export const Planning: React.FC<PlanningProps> = ({ units, isAdmin, settings, on
               <AdminUnitResourceRow 
                 key={unit.id} 
                 unit={unit} 
+                sessions={sessions}
                 onSave={onUpdateUnit} 
                 onEditDetails={onEditDetails}
+                onSaveSession={onSaveSession}
               />
             ))}
           </div>

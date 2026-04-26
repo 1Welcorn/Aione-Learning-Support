@@ -1,22 +1,41 @@
-import React, { useRef, useState, useImperativeHandle } from 'react';
-import { Play, Sparkles } from 'lucide-react';
+import React, { useRef, useState, useImperativeHandle, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { Play, Sparkles, X } from 'lucide-react';
 
 export type EmbedPreviewHandle = {
   open: () => void;
   close: () => void;
 };
 
-const EmbedPreview = React.forwardRef<EmbedPreviewHandle, { url: string; title?: string; thumbnailUrl?: string }>((props, ref) => {
-  const { url, title, thumbnailUrl } = props;
+const EmbedPreview = React.forwardRef<EmbedPreviewHandle, { url: string; title?: string; thumbnailUrl?: string; maskIcon?: string }>((props, ref) => {
+  const { url, title, thumbnailUrl, maskIcon } = props;
   const [open, setOpen] = useState(false);
   const modalRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    };
+  }, [open]);
 
   const openFullscreen = () => {
     setOpen(true);
     setTimeout(() => {
       const el = modalRef.current;
-      if (el && el.requestFullscreen) el.requestFullscreen().catch(() => {});
-    }, 50);
+      if (el && el.requestFullscreen) {
+        el.requestFullscreen().catch(() => {
+          console.log('Fullscreen request blocked or failed, using portal modal.');
+        });
+      }
+    }, 150);
   };
 
   const closeFullscreen = async () => {
@@ -28,66 +47,42 @@ const EmbedPreview = React.forwardRef<EmbedPreviewHandle, { url: string; title?:
 
   useImperativeHandle(ref, () => ({ open: openFullscreen, close: closeFullscreen }));
 
+  const modalContent = open && (
+    <div className="embed-modal" ref={modalRef}>
+      <button className="embed-modal-close-mini" onClick={closeFullscreen}>
+         <X size={32} />
+      </button>
+      <iframe
+        src={url}
+        title={title || 'Atividade interativa'}
+        allow="fullscreen; autoplay; clipboard-read; clipboard-write"
+        allowFullScreen
+        className="game-iframe-v6"
+      />
+    </div>
+  );
+
   return (
     <>
       <div className="embed-preview" role="button" onClick={openFullscreen}>
         <div className="embed-preview-inner">
-          <div className="embed-play-overlay">
-            <div className="embed-play-btn">
-              <Play size={40} fill="white" />
-            </div>
-            <span className="embed-play-label">CLIQUE PARA JOGAR</span>
-          </div>
-
           {thumbnailUrl ? (
             <img src={thumbnailUrl} alt={title || 'Preview'} className="embed-thumbnail" />
           ) : (
-            <div className="embed-board modern">
-              <div className="embed-board-header">
-                <Sparkles size={20} color="#6366f1" />
-                <span>LIÇÃO INTERATIVA</span>
-              </div>
-              <div className="embed-board-body">
-                <div className="embed-col">
-                  <div className="embed-col-title">OBJETOS</div>
-                  <div className="embed-card-v2"></div>
-                  <div className="embed-card-v2"></div>
-                </div>
-                <div className="embed-col">
-                  <div className="embed-col-title">AÇÕES</div>
-                  <div className="embed-card-v2 accent"></div>
-                  <div className="embed-card-v2"></div>
-                </div>
-                <div className="embed-col">
-                  <div className="embed-col-title">TRADUÇÃO</div>
-                  <div className="embed-card-v2"></div>
-                  <div className="embed-card-v2 accent"></div>
-                </div>
-              </div>
-              <div className="embed-board-footer">
-                DESAFIO DE ASSOCIAÇÃO RÁPIDA
+            <div className="embed-placeholder-solid">
+              <div className="solid-play-circle">
+                {maskIcon ? (
+                  <img src={maskIcon} alt="Mask" style={{ width: '70%', height: '70%', objectFit: 'contain' }} />
+                ) : (
+                  <Play size={64} fill="currentColor" />
+                )}
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {open && (
-        <div className="embed-modal" ref={modalRef}>
-          <div className="embed-modal-inner">
-            <button className="embed-modal-close" onClick={closeFullscreen}>✕</button>
-            {/* Overlay corners to hide/cover small in-iframe controls (cross-origin) */}
-            <div className="embed-overlay-corner top-right" aria-hidden="true" />
-            <div className="embed-overlay-corner bottom-right" aria-hidden="true" />
-            <iframe
-              src={url}
-              title={title || 'Atividade interativa'}
-              allow="fullscreen; autoplay; clipboard-read; clipboard-write"
-              allowFullScreen
-            />
-          </div>
-        </div>
-      )}
+      {open && createPortal(modalContent, document.body)}
     </>
   );
 });

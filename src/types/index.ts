@@ -17,6 +17,24 @@ export interface Question {
 export interface ExternalLink {
   label: string;
   url: string;
+  width?: string;
+  loop?: boolean;
+  repeatCount?: number;
+  delay?: number;
+}
+
+export interface EmbedActivity {
+  url: string;
+  title?: string;
+  width?: string;
+  thumbnailUrl?: string;
+  maskIcon?: string;
+}
+
+export interface GameWord {
+  pt: string;
+  en: string;
+  icon: string;
 }
 
 export interface Unit {
@@ -31,14 +49,17 @@ export interface Unit {
   plan_e?: string;
   plan_a?: string;
   wa?: string;
-  embed_urls?: string[];
+  embed_urls?: (string | EmbedActivity)[];
   embed_preview_images?: string[];
+  hide_nav?: boolean;
   descriptors?: string[];
   questions: Question[];
   external_links?: ExternalLink[];
   vocabulary_list?: string[];
+  game_words?: GameWord[];
   learning_objectives?: string;
   methodology?: string;
+  is_locked?: boolean;
 }
 
 export interface Session {

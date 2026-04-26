@@ -19,7 +19,10 @@ export const useStudentJourney = (userId: string) => {
         .single();
 
       if (profileError) {
-        console.error('Error fetching profile:', profileError);
+        // Silenciar erro de tabela inexistente
+        if (profileError.code !== 'PGRST116' && profileError.status !== 406) {
+          console.error('Error fetching profile:', profileError);
+        }
       }
 
       // 2. Fetch Unit Progress
@@ -29,13 +32,15 @@ export const useStudentJourney = (userId: string) => {
         .eq('profile_id', userId);
 
       if (progressError) {
-        console.error('Error fetching progress:', progressError);
+        if (progressError.code !== 'PGRST116' && progressError.status !== 406) {
+          console.error('Error fetching progress:', progressError);
+        }
       }
 
       setStats(profileData);
       setProgress(progressData || []);
     } catch (err) {
-      console.error('Unexpected error in useStudentJourney:', err);
+      // Falha silenciosa para evitar loops
     } finally {
       setLoading(false);
     }

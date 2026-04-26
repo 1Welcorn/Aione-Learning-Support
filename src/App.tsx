@@ -1,7 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
 // Build trigger: a452db8
+import type { Unit } from './types';
 import { useAuth } from './context/AuthContext';
-import { Home, BookOpen, BarChart2, ClipboardList, MessageCircle, Lock } from 'lucide-react';
+import { BookOpen, BarChart2, ClipboardList, MessageCircle, Lock, Unlock } from 'lucide-react';
+import homeButton from './assets/home-button.png';
+import classButton from './assets/class-button.png';
+import helpButton from './assets/help-button.png';
+import plansButton from './assets/plans-button.png';
 import { LoginScreen } from './components/features/LoginScreen';
 import { Dashboard } from './components/features/Dashboard';
 import { Activities } from './components/features/Activities';
@@ -19,13 +24,14 @@ export const App: React.FC = () => {
   }, []);
 
   const { role, user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState('home');
-  const [targetUnitId, setTargetUnitId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'adventure' | 'activities' | 'planning' | 'chat' | 'settings' | 'whatsapp'>('adventure');
+  const [activeUnit, setActiveUnit] = useState<Unit | null>(null);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [celebration, setCelebration] = useState<{ xp: number, stars: number } | null>(null);
   const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
-  const { 
-    units, sessions, answers, settings, loading, syncStatus, 
-    saveAnswer, saveSession, updateSession, deleteSession, resetUnitAnswers, updateUnit, createUnit 
+  const {
+    units, sessions, answers, settings, loading, syncStatus,
+    saveAnswer, saveSession, updateSession, deleteSession, resetUnitAnswers, updateUnit, createUnit
   } = useSarehData();
 
   // Student Journey Hook for rewards
@@ -42,28 +48,38 @@ export const App: React.FC = () => {
     }
   };
 
+  const sortedUnits = useMemo(() => {
+    if (!units) return [];
+    return [...units].sort((a, b) => {
+      const numA = parseInt(a.title.match(/\d+/)?.[0] || '999');
+      const numB = parseInt(b.title.match(/\d+/)?.[0] || '999');
+      if (numA !== numB) return numA - numB;
+      return (a.sort_order || 0) - (b.sort_order || 0);
+    });
+  }, [units]);
+
   const completedPct = useMemo(() => {
     try {
-      if (!units || units.length === 0) return 0;
-      const completedUnits = units.filter(u => {
+      if (!sortedUnits || sortedUnits.length === 0) return 0;
+      const completedUnits = sortedUnits.filter(u => {
         if (!u || !u.questions) return false;
         return u.questions.every((_, i) => answers[`${u.id}-${i}`]?.is_done);
       }).length;
-      return Math.round((completedUnits / units.length) * 100);
+      return Math.round((completedUnits / sortedUnits.length) * 100);
     } catch (e) {
       console.error("Error calculating progress:", e);
       return 0;
     }
-  }, [units, answers]);
+  }, [sortedUnits, answers]);
 
   const unitStatus = useMemo(() => {
     const status: Record<string, boolean> = {};
-    if (!units) return status;
-    units.forEach(u => {
+    if (!sortedUnits) return status;
+    sortedUnits.forEach(u => {
       status[u.id] = u.questions.every((_, i) => answers[`${u.id}-${i}`]?.is_done);
     });
     return status;
-  }, [units, answers]);
+  }, [sortedUnits, answers]);
 
   console.log("App State:", { role, loading, unitsCount: units?.length, settingsAvailable: !!settings });
 
@@ -97,186 +113,227 @@ export const App: React.FC = () => {
       </div>
     );
   }
-  
+
   return (
     <div id="app">
-      {role === 'admin' && <div className="admin-mode-light" title="Modo Administrador Ativo"></div>}
+
       <div className="topbar">
         <div>
           <div className="topbar-logo">SAREH · Domiciliar</div>
           <div className="topbar-name">Ione Jordão Ribeiro</div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <span className={`role-badge ${role}`}>
-            {role === 'admin' ? 'Admin' : role === 'student' ? 'Estudante' : 'Mediadora'}
-          </span>
-          <span className={`sync-dot ${syncStatus}`}></span><br />
           <span style={{ fontSize: '11px', color: 'var(--ink4)' }}>
             {role === 'student' ? 'Ione Jordão Ribeiro' : (settings?.med_name || 'Geocélia')}
           </span>
         </div>
       </div>
 
-      {/* Sidebar / Bottom Nav (Responsive) */}
-      <nav className="bottom-nav">
-        <div className="sidebar-header-v5">
-          <img src="/logo-aione.png" alt="Aione" className="sidebar-logo-v5" onError={(e) => (e.target as any).style.display = 'none'} />
+      {/* Admin View Toggle (Floating Pill) */}
+      {role === 'admin' && (
+        <div
+          className="admin-view-toggle-pill"
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            left: '20px',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '6px 6px 6px 16px',
+            background: isPreviewMode ? '#1e293b' : 'white',
+            borderRadius: '30px',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+            border: '1px solid rgba(0,0,0,0.05)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            backdropFilter: 'blur(10px)'
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{
+              fontSize: '9px',
+              fontWeight: 900,
+              color: isPreviewMode ? '#94a3b8' : '#64748b',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
+            }}>
+              Modo de Visualização
+            </span>
+            <span style={{
+              fontSize: '13px',
+              fontWeight: 800,
+              color: isPreviewMode ? 'white' : '#1e293b'
+            }}>
+              {isPreviewMode ? 'Estudante' : 'Administrador'}
+            </span>
+          </div>
+
+          <button
+            onClick={() => {
+              setIsPreviewMode(!isPreviewMode);
+              if (!isPreviewMode) setActiveTab('adventure');
+            }}
+            style={{
+              background: isPreviewMode ? '#fbbf24' : '#0ea5e9',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              fontWeight: 900,
+              fontSize: '11px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            {isPreviewMode ? (
+              <><span>🔓</span> SAIR DO PREVIEW</>
+            ) : (
+              <><span>👁️</span> VER COMO ALUNO</>
+            )}
+          </button>
         </div>
-        
-        <div className="nav-group-v5">
-          <button 
-            className={`nav-btn-v5 home ${activeTab === 'home' ? 'active' : ''}`}
-            onClick={() => setActiveTab('home')}
-          >
-            <div className="nav-icon-v5"><Home size={22} /></div>
-            <span className="nav-label-v5">Início</span>
-          </button>
+      )}
+      <aside className="sidebar-kids">
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <h2 style={{ color: '#00D2A1', fontSize: '2rem', filter: 'drop-shadow(2px 2px 0px #fff)' }}>Aione 🚀</h2>
+        </div>
 
-          <button 
-            className={`nav-btn-v5 activities ${activeTab === 'activities' ? 'active' : ''}`}
-            onClick={() => setActiveTab('activities')}
-          >
-            <div className="nav-icon-v5"><BookOpen size={22} /></div>
-            <span className="nav-label-v5">Aulas</span>
-          </button>
+        <button 
+          className={`nav-link-kids ${activeTab === 'adventure' ? 'active' : ''}`}
+          onClick={() => { setActiveTab('adventure'); setActiveUnit(null); }}
+        >
+          <div className="icon-wrapper">⭐</div>
+          <span>Minhas Aulas</span>
+        </button>
 
+        {!isPreviewMode && role === 'admin' && (
           <button 
-            className={`nav-btn-v5 progress ${activeTab === 'progress' ? 'active' : ''}`}
-            onClick={() => setActiveTab('progress')}
-          >
-            <div className="nav-icon-v5"><BarChart2 size={22} /></div>
-            <span className="nav-label-v5">Relat.</span>
-          </button>
-
-          <button 
-            className={`nav-btn-v5 planning ${activeTab === 'planning' ? 'active' : ''}`}
+            className={`nav-link-kids ${activeTab === 'planning' ? 'active' : ''}`}
             onClick={() => setActiveTab('planning')}
           >
-            <div className="nav-icon-v5"><ClipboardList size={22} /></div>
-            <span className="nav-label-v5">Plano</span>
-          </button>
-
-          <button 
-            className={`nav-btn-v5 doubts ${activeTab === 'whatsapp' ? 'active' : ''}`}
-            onClick={() => setActiveTab('whatsapp')}
-          >
-            <div className="nav-icon-v5"><MessageCircle size={22} /></div>
-            <span className="nav-label-v5">Dúvidas</span>
-          </button>
-        </div>
-
-        {role === 'admin' && (
-          <button 
-            className={`nav-btn-v5 admin ${activeTab === 'settings' ? 'active' : ''}`}
-            onClick={() => setActiveTab('settings')}
-          >
-            <div className="nav-icon-v5"><Lock size={20} /></div>
-            <span className="nav-label-v5">Admin</span>
+            <div className="icon-wrapper">🗺️</div>
+            <span>Meu Mapa</span>
           </button>
         )}
-      </nav>
+
+        <button 
+          className={`nav-link-kids ${activeTab === 'chat' ? 'active' : ''}`}
+          onClick={() => setActiveTab('chat')}
+        >
+          <div className="icon-wrapper">🎈</div>
+          <span>Ajuda</span>
+        </button>
+      </aside>
 
       <div className="main-content-wrapper">
         <main className="screen active">
-          {activeTab === 'home' && (
-             <Dashboard 
-                onNavigate={(screen, unitId) => {
-                  setActiveTab(screen);
-                  if (unitId) setTargetUnitId(unitId);
-                }}
-                completedPct={completedPct}
-                sessionsCount={sessions.length}
-                mediatorName={settings?.med_name || 'Geocélia'}
-                mediatorPhone={settings?.med_phone || '554391637162'}
-             />
+          {activeTab === 'adventure' && !activeUnit && (
+            <Dashboard
+              onNavigate={(screen, unitId) => {
+                const unit = sortedUnits.find(u => u.id === unitId);
+                if (unit) setActiveUnit(unit);
+              }}
+              completedPct={completedPct}
+              sessionsCount={sessions.length}
+              mediatorName={settings?.med_name || 'Geocélia'}
+              mediatorPhone={settings?.med_phone || '554391637162'}
+              units={sortedUnits}
+              answers={answers}
+              isAdmin={role === 'admin' && !isPreviewMode}
+              onUpdateUnit={updateUnit}
+            />
           )}
-          {activeTab === 'activities' && (
-             <div>
-               <div className="back-row">
-                  <button className="back-btn" onClick={() => setActiveTab('home')}>←</button>
-                  <h2 className="screen-title" style={{ margin: 0 }}>Aulas</h2>
-               </div>
-                <Activities 
-                  units={units} 
-                  answers={answers} 
-                  onSaveAnswer={saveAnswer} 
-                  onSaveSession={saveSession}
-                  isAdmin={role === 'admin'}
-                  onUpdateUnit={updateUnit}
-                  onCreateUnit={createUnit}
-                  onGameOver={handleGameOver}
-                  initialExpandedId={targetUnitId}
-                  onGoHome={() => setActiveTab('home')}
-                />
-             </div>
+
+          {activeTab === 'adventure' && activeUnit && (
+            <Activities
+              units={sortedUnits}
+              answers={answers}
+              onSaveAnswer={saveAnswer}
+              onSaveSession={saveSession}
+              isAdmin={role === 'admin' && !isPreviewMode}
+              isMediator={role === 'mediator'}
+              onUpdateUnit={updateUnit}
+              onCreateUnit={createUnit}
+              onGameOver={handleGameOver}
+              initialExpandedId={activeUnit.id}
+              onGoHome={() => setActiveUnit(null)}
+              onToggle={() => setActiveUnit(null)}
+            />
           )}
-           {activeTab === 'progress' && (
-             <div>
-               <div className="back-row">
-                  <button className="back-btn" onClick={() => setActiveTab('home')}>←</button>
-                  <h2 className="screen-title" style={{ margin: 0 }}>Progresso</h2>
-               </div>
-               <Progress 
-                 units={units} 
-                 sessions={sessions} 
-                 unitStatus={unitStatus} 
-                 onResetUnitAnswers={resetUnitAnswers} 
-                 onUpdateSession={updateSession}
-                 onDeleteSession={deleteSession}
-                 isAdmin={role === 'admin'}
-               />
-             </div>
-          )}
-           {activeTab === 'planning' && role === 'admin' && (
-             <div>
-               {!editingUnitId ? (
-                 <>
-                   <div className="back-row">
-                      <button className="back-btn" onClick={() => setActiveTab('home')}>←</button>
-                      <h2 className="screen-title" style={{ margin: 0 }}>Planejamento</h2>
-                   </div>
-                   <Planning 
-                     units={units} 
-                     isAdmin={role === 'admin'} 
-                     settings={settings} 
-                     onUpdateUnit={(id, updates) => updateUnit(id, updates)} 
-                     onEditDetails={(id) => setEditingUnitId(id)}
-                   />
-                 </>
-               ) : (
-                 <PlanningEditor 
-                   unitId={editingUnitId} 
-                   onBack={() => setEditingUnitId(null)} 
-                 />
-               )}
-             </div>
-          )}
-           {activeTab === 'whatsapp' && (
-             <div>
-               <div className="back-row">
-                  <button className="back-btn" onClick={() => setActiveTab('home')}>←</button>
-                  <h2 className="screen-title" style={{ margin: 0 }}>WhatsApp assistant</h2>
-               </div>
-               <WhatsAppAssistant 
-                 units={units} 
-                 mediatorPhone={settings?.med_phone || '554391637162'}
-               />
-             </div>
-          )}
-           {activeTab === 'settings' && (
-             <div>
-               <div className="back-row">
-                  <button className="back-btn" onClick={() => setActiveTab('home')}>←</button>
-                  <h2 className="screen-title" style={{ margin: 0 }}>Configurações</h2>
-               </div>
-               <div className="settings-section">
-                  <div className="settings-row">
-                    <div className="settings-row-label">E-mail logado</div>
-                    <div className="settings-row-sub">{role === 'admin' ? 'Administrador' : 'Mediadora'}</div>
+          {activeTab === 'planning' && role === 'admin' && (
+            <div>
+              {!editingUnitId ? (
+                <>
+                  <div className="back-row">
+                    <button className="back-btn" onClick={() => setActiveTab('adventure')}>←</button>
+                    <h2 className="screen-title" style={{ margin: 0 }}>Planejamento</h2>
                   </div>
-               </div>
-               <button className="logout-btn" onClick={logout}>Sair / Trocar perfil</button>
-             </div>
+                  <Planning
+                    units={units}
+                    sessions={sessions}
+                    isAdmin={role === 'admin'}
+                    settings={settings}
+                    onUpdateUnit={(id, updates) => updateUnit(id, updates)}
+                    onEditDetails={(id) => setEditingUnitId(id)}
+                    onSaveSession={saveSession}
+                  />
+                </>
+              ) : (
+                <PlanningEditor
+                  unitId={editingUnitId}
+                  onBack={() => setEditingUnitId(null)}
+                  updateUnit={updateUnit}
+                />
+              )}
+            </div>
+          )}
+
+          {activeTab === 'activities' && (
+            <Activities
+              units={sortedUnits}
+              answers={answers}
+              onSaveAnswer={saveAnswer}
+              onSaveSession={saveSession}
+              isAdmin={role === 'admin' && !isPreviewMode}
+              isMediator={role === 'mediator'}
+              onUpdateUnit={updateUnit}
+              onCreateUnit={createUnit}
+              onGameOver={handleGameOver}
+              onGoHome={() => setActiveTab('adventure')}
+              onToggle={() => setActiveTab('adventure')}
+            />
+          )}
+          {activeTab === 'whatsapp' && (
+            <div>
+              <div className="back-row">
+                <button className="back-btn" onClick={() => setActiveTab('adventure')}>←</button>
+                <h2 className="screen-title" style={{ margin: 0 }}>WhatsApp assistant</h2>
+              </div>
+              <WhatsAppAssistant
+                units={units}
+                mediatorPhone={settings?.med_phone || '554391637162'}
+              />
+            </div>
+          )}
+          {activeTab === 'settings' && (
+            <div>
+              <div className="back-row">
+                <button className="back-btn" onClick={() => setActiveTab('adventure')}>←</button>
+                <h2 className="screen-title" style={{ margin: 0 }}>Configurações</h2>
+              </div>
+              <div className="settings-section">
+                <div className="settings-row">
+                  <div className="settings-row-label">E-mail logado</div>
+                  <div className="settings-row-sub">{role === 'admin' ? 'Administrador' : 'Mediadora'}</div>
+                </div>
+              </div>
+              <button className="logout-btn" onClick={logout}>Sair / Trocar perfil</button>
+            </div>
           )}
         </main>
       </div>
@@ -284,24 +341,24 @@ export const App: React.FC = () => {
       {celebration && (
         <div className="celebration-overlay">
           <div className="celebration-card">
-             <span className="cel-trophy">🏆</span>
-             <h2 className="cel-title">INCRÍVEL!</h2>
-             <p className="cel-sub">Você completou o desafio com sucesso!</p>
-             
-             <div className="cel-rewards">
-               <div className="cel-reward-item">
-                 <span className="cel-reward-val">+{celebration.xp}</span>
-                 <span className="cel-reward-lbl">XP</span>
-               </div>
-               <div className="cel-reward-item">
-                 <span className="cel-reward-val">+{celebration.stars}</span>
-                 <span className="cel-reward-lbl">Estrelas</span>
-               </div>
-             </div>
+            <span className="cel-trophy">🏆</span>
+            <h2 className="cel-title">INCRÍVEL!</h2>
+            <p className="cel-sub">Você completou o desafio com sucesso!</p>
 
-             <button className="cel-btn" onClick={() => setCelebration(null)}>
-               CONTINUAR JORNADA
-             </button>
+            <div className="cel-rewards">
+              <div className="cel-reward-item">
+                <span className="cel-reward-val">+{celebration.xp}</span>
+                <span className="cel-reward-lbl">XP</span>
+              </div>
+              <div className="cel-reward-item">
+                <span className="cel-reward-val">+{celebration.stars}</span>
+                <span className="cel-reward-lbl">Estrelas</span>
+              </div>
+            </div>
+
+            <button className="cel-btn" onClick={() => setCelebration(null)}>
+              CONTINUAR JORNADA
+            </button>
           </div>
         </div>
       )}
