@@ -3479,7 +3479,7 @@ select {
   }
 }
 
-/* Melhoria dos botÃµes de guia e relatÃ³rio */
+/* Melhoria dos botões de guia e relatório */
 .mediator-hint-btn {
   display: flex;
   align-items: center;
@@ -7143,7 +7143,7 @@ select {
     box-shadow: 0 10px 30px rgba(0,0,0,0.05);
     border: 1px solid #e2e8f0;
     margin-bottom: 40px;
-    overflow-x: auto; /* Garante que tabelas largas não quebrem o layout */
+    overflow-x: auto; /* Garante que tabelas largas n�o quebrem o layout */
 }
 
 .official-document-header {
@@ -7204,7 +7204,7 @@ select {
 
 /* --- FULL WIDTH FIX V7 --- */
 .main-content-wrapper {
-    margin-left: 280px !important; /* Espaço exato para a sidebar */
+    margin-left: 280px !important; /* Espa�o exato para a sidebar */
     width: calc(100% - 280px) !important; /* Ocupa o resto da tela */
     min-height: 100vh;
     background: #f8fafc;
@@ -7224,9 +7224,9 @@ select {
     overflow-x: auto !important; /* Caso a tabela ainda seja maior que a tela, permite scroll interno */
 }
 
-/* Ajuste fino para a tabela oficial não esmagar as colunas */
+/* Ajuste fino para a tabela oficial n�o esmagar as colunas */
 .plan-table.official {
-    min-width: 1000px !important; /* Garante que a tabela tenha espaço para os textos */
+    min-width: 1000px !important; /* Garante que a tabela tenha espa�o para os textos */
 }
 
 

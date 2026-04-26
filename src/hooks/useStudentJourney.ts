@@ -20,7 +20,7 @@ export const useStudentJourney = (userId: string) => {
 
       if (profileError) {
         // Silenciar erro de tabela inexistente
-        if (profileError.code !== 'PGRST116' && profileError.status !== 406) {
+        if (profileError.code !== 'PGRST116') {
           console.error('Error fetching profile:', profileError);
         }
       }
@@ -32,7 +32,7 @@ export const useStudentJourney = (userId: string) => {
         .eq('profile_id', userId);
 
       if (progressError) {
-        if (progressError.code !== 'PGRST116' && progressError.status !== 406) {
+        if (progressError.code !== 'PGRST116') {
           console.error('Error fetching progress:', progressError);
         }
       }

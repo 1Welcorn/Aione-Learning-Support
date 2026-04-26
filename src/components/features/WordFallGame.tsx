@@ -38,7 +38,7 @@ const WordFallGame: React.FC<WordFallGameProps> = ({ unitTitle, words, onGameOve
   });
   const [correctWordIds, setCorrectWordIds] = useState<Set<number>>(new Set());
   
-  const gameLoopRef = useRef<number>();
+  const gameLoopRef = useRef<number | null>(null);
   const lastSpawnRef = useRef<number>(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -108,7 +108,7 @@ const WordFallGame: React.FC<WordFallGameProps> = ({ unitTitle, words, onGameOve
 
     gameLoopRef.current = requestAnimationFrame(update);
     return () => {
-      if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
+      if (gameLoopRef.current !== null) cancelAnimationFrame(gameLoopRef.current);
     };
   }, [gameState, spawnWord, score, correctWordIds]);
 

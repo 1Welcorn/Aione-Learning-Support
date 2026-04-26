@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import type { Unit, Question, EmbedActivity } from '../../types';
+import type { Unit, Question, EmbedActivity, Session } from '../../types';
 import { Printer, Save, CheckCircle, Trash2, Plus, Lock, Unlock, ClipboardList } from 'lucide-react';
 import { COLORS } from '../../constants';
 import { QuestionBlock } from './QuestionBlock';
 
 interface PlanningProps {
   units: Unit[];
+  sessions: Session[];
   isAdmin: boolean;
   settings: any;
   onUpdateUnit: (id: string, updates: Partial<Unit>) => Promise<{ success: boolean; error?: string }>;
   onEditDetails: (id: string) => void;
+  onSaveSession: (unitId: string, note: string) => Promise<boolean>;
 }
 
 const AdminUnitResourceRow: React.FC<{ 

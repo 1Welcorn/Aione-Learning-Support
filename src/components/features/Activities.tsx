@@ -26,6 +26,9 @@ interface BaseStep {
 
 interface GameStep extends BaseStep {
   type: 'game';
+  title?: string;
+  mechanic?: string;
+  xp?: number;
 }
 
 interface BriefStep extends BaseStep {
@@ -231,7 +234,12 @@ const StepNavigation: React.FC<{
   }
   
   // 2. WordFall Game
-  steps.push({ type: 'game' });
+  steps.push({ 
+    type: 'game',
+    title: 'WordFall Game',
+    mechanic: 'Capture as palavras corretas!',
+    xp: 250
+  });
   
   // 3. Interactive Activities (Embeds)
   const embedItems = (unit.embed_urls || []).map((itemOrUrl, i): EmbedStep => {
