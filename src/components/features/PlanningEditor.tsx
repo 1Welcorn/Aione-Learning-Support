@@ -567,9 +567,9 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack, updateU
                   <span className="q-number">Questão {idx + 1}</span>
                   <button 
                     onClick={() => {
-                      const newQs = [...unitData.questions];
-                      newQs.splice(idx, 1);
+                      const newQs = unitData.questions.filter((_: any, i: number) => i !== idx);
                       setUnitData({ ...unitData, questions: newQs });
+                      setIsDirty(true);
                     }}
                     className="q-delete-btn"
                   >
@@ -587,6 +587,7 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack, updateU
                         const newQs = [...unitData.questions];
                         newQs[idx].q = e.target.value;
                         setUnitData({ ...unitData, questions: newQs });
+                        setIsDirty(true);
                       }}
                       placeholder="Ex: Qual a tradução de Spoon?"
                     />
@@ -601,6 +602,7 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack, updateU
                           const newQs = [...unitData.questions];
                           newQs[idx].type = e.target.value;
                           setUnitData({ ...unitData, questions: newQs });
+                          setIsDirty(true);
                         }}
                       >
                         <option value="mc">Múltipla Escolha</option>
@@ -619,6 +621,7 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack, updateU
                           const newQs = [...unitData.questions];
                           newQs[idx].hint = e.target.value;
                           setUnitData({ ...unitData, questions: newQs });
+                          setIsDirty(true);
                         }}
                         placeholder="Ex: [PT]Pense na cozinha...[/PT]"
                       />
@@ -635,6 +638,7 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack, updateU
                           const newQs = [...unitData.questions];
                           newQs[idx].opts = e.target.value.split(',').map(s => s.trim());
                           setUnitData({ ...unitData, questions: newQs });
+                          setIsDirty(true);
                         }}
                         placeholder="Opção 1, Opção 2, Opção 3"
                       />
@@ -658,6 +662,7 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack, updateU
                           const raw = e.target.value;
                           newQs[idx].correctAnswer = raw === '' ? undefined : raw;
                           setUnitData({ ...unitData, questions: newQs });
+                          setIsDirty(true);
                         }}
                         placeholder="Uma resposta por linha se quiser aceitar várias formas (ex.: spoon / colher)"
                       />
@@ -673,6 +678,7 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack, updateU
                         const newQs = [...unitData.questions];
                         newQs[idx].mediator = e.target.value;
                         setUnitData({ ...unitData, questions: newQs });
+                        setIsDirty(true);
                       }}
                       placeholder="Ex: Peça para ela apontar para o objeto real."
                     />
@@ -687,6 +693,7 @@ const PlanningEditor: React.FC<PlanningEditorProps> = ({ unitId, onBack, updateU
                 const newQ = { q: '', type: 'mc', opts: [''], mediator: '', hint: '' };
                 const newQs = [...(unitData.questions || []), newQ];
                 setUnitData({ ...unitData, questions: newQs });
+                setIsDirty(true);
               }}
             >
               <Plus size={20} /> ADICIONAR NOVA QUESTÃO
