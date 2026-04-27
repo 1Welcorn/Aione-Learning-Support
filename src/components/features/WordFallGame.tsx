@@ -62,7 +62,7 @@ const WordFallGame: React.FC<WordFallGameProps> = ({ unitTitle, words, onGameOve
         word: randomWord,
         baseX: 15 + Math.random() * 70, 
         x: 15 + Math.random() * 70,
-        y: -100,
+        y: -40, // Começa atrás do header
         speed: Math.min(baseSpeed * speedDifficultyMultiplier, 1.8),
         phase: Math.random() * Math.PI * 2,
         rotation: 0
@@ -193,25 +193,25 @@ const WordFallGame: React.FC<WordFallGameProps> = ({ unitTitle, words, onGameOve
 
   return (
     <div className="wordfall-container" style={containerStyle}>
-      {/* HEADER: Limpo e Informativo */}
-      <div className="game-header" style={headerStyle}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <button onClick={onBack} style={backBtnStyle}><ArrowLeft size={18} /></button>
-            <h1 style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b', margin: 0 }}>
-                {unitTitle}
-            </h1>
-        </div>
-        <div style={statsStyle}>
-          <div style={pillStyle}><Timer size={16} /> {timeLeft}s</div>
-          <div style={pillStyle}><Trophy size={16} /> {score}</div>
-          <div style={{...pillStyle, color: combo > 5 ? '#f59e0b' : '#10b981'}}>
-            <Zap size={16} /> x{combo}
-          </div>
-        </div>
-      </div>
-
       {/* ÁREA DE JOGO (Canvas) */}
       <div ref={canvasRef} className="game-canvas" style={canvasStyle}>
+        {/* HEADER: Limpo e Informativo */}
+        <div className="game-header" style={headerStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <button onClick={onBack} style={backBtnStyle}><ArrowLeft size={18} /></button>
+              <h1 style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b', margin: 0 }}>
+                  {unitTitle}
+              </h1>
+          </div>
+          <div style={statsStyle}>
+            <div style={pillStyle}><Timer size={16} /> {timeLeft}s</div>
+            <div style={pillStyle}><Trophy size={16} /> {score}</div>
+            <div style={{...pillStyle, color: combo > 5 ? '#f59e0b' : '#10b981'}}>
+              <Zap size={16} /> x{combo}
+            </div>
+          </div>
+        </div>
+
         {gameState === 'start' && (
           <div className="game-overlay" style={overlayStyle}>
             <div style={mascotContainerStyle}>🚀</div>
@@ -322,12 +322,13 @@ const WordFallGame: React.FC<WordFallGameProps> = ({ unitTitle, words, onGameOve
 // --- ESTILOS INLINE ATUALIZADOS (Limpos e Modernos) ---
 const containerStyle: React.CSSProperties = {
   width: '100%', height: '100%', background: '#f8fafc', 
-  display: 'flex', flexDirection: 'column', fontFamily: '"Outfit", "Inter", sans-serif', overflow: 'hidden'
+  position: 'relative', fontFamily: '"Outfit", "Inter", sans-serif', overflow: 'hidden'
 };
 
 const headerStyle: React.CSSProperties = {
   padding: '12px 20px', display: 'flex', justifyContent: 'space-between', 
-  alignItems: 'center', background: 'white', borderBottom: '1px solid #e2e8f0', zIndex: 20
+  alignItems: 'center', background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(8px)',
+  borderBottom: '1px solid #e2e8f0', zIndex: 20, position: 'relative'
 };
 
 const pillStyle: React.CSSProperties = {
@@ -343,7 +344,8 @@ const backBtnStyle: React.CSSProperties = {
 const statsStyle: React.CSSProperties = { display: 'flex', gap: '10px' };
 
 const canvasStyle: React.CSSProperties = {
-  flex: 1, position: 'relative', background: 'linear-gradient(180deg, #e6fffa 0%, #ffffff 100%)', overflow: 'hidden',
+  position: 'absolute', inset: 0, background: 'linear-gradient(180deg, #e6fffa 0%, #ffffff 100%)', overflow: 'hidden',
+  display: 'flex', flexDirection: 'column',
   // Área segura inferior para o input não cobrir as palavras no final
   paddingBottom: '120px' 
 };
