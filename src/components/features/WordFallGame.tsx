@@ -82,6 +82,13 @@ const WordFallGame: React.FC<WordFallGameProps> = ({ unitTitle, words, onGameOve
     setCombo(0);
     setTimeLeft(90);
     lastSpawnRef.current = performance.now();
+    
+    // Desbloquear áudio em navegadores com políticas estritas (iOS/Safari)
+    if (window.speechSynthesis) {
+      const unlock = new SpeechSynthesisUtterance("");
+      window.speechSynthesis.speak(unlock);
+    }
+
     setTimeout(() => inputRef.current?.focus(), 100);
   };
 
@@ -173,15 +180,19 @@ const WordFallGame: React.FC<WordFallGameProps> = ({ unitTitle, words, onGameOve
   }, [gameState, score, highScore, unitTitle, onGameOver, wordsTyped]);
 
   const speak = (text: string) => {
-    if (!window.speechSynthesis) return;
+    if (!window.speechSynthesis) {
+      console.warn('Speech synthesis not supported');
+      return;
+    }
+    console.log('Speaking:', text);
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
     
-    // Velocidade dinâmica: começa em 0.7 (lento) e sobe até 1.3 conforme o score aumenta
     const dynamicRate = Math.min(0.7 + (score / 2500), 1.3);
     utterance.rate = dynamicRate;
     
+    // Garantir que a voz seja carregada e falada
     window.speechSynthesis.speak(utterance);
   };
 
