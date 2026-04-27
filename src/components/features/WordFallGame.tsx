@@ -174,10 +174,14 @@ const WordFallGame: React.FC<WordFallGameProps> = ({ unitTitle, words, onGameOve
 
   const speak = (text: string) => {
     if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel(); // Para qualquer fala anterior
+    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
-    utterance.rate = 0.9; // Um pouco mais lento para clareza
+    
+    // Velocidade dinâmica: começa em 0.7 (lento) e sobe até 1.3 conforme o score aumenta
+    const dynamicRate = Math.min(0.7 + (score / 2500), 1.3);
+    utterance.rate = dynamicRate;
+    
     window.speechSynthesis.speak(utterance);
   };
 
