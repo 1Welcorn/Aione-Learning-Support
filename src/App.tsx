@@ -281,6 +281,7 @@ export const App: React.FC = () => {
                     onUpdateUnit={(id, updates) => updateUnit(id, updates)}
                     onEditDetails={(id) => setEditingUnitId(id)}
                     onSaveSession={saveSession}
+                    onResetProgress={resetUnitAnswers}
                   />
                 </>
               ) : (

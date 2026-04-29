@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Unit, Question, EmbedActivity, Session } from '../../types';
-import { Printer, Save, CheckCircle, Trash2, Plus, Lock, Unlock, ClipboardList } from 'lucide-react';
+import { Printer, Save, CheckCircle, Trash2, Plus, Lock, Unlock, ClipboardList, RotateCcw } from 'lucide-react';
 import { COLORS } from '../../constants';
 import { QuestionBlock } from './QuestionBlock';
 
@@ -12,6 +12,7 @@ interface PlanningProps {
   onUpdateUnit: (id: string, updates: Partial<Unit>) => Promise<{ success: boolean; error?: string }>;
   onEditDetails: (id: string) => void;
   onSaveSession: (unitId: string, note: string) => Promise<boolean>;
+  onResetProgress: (id: string) => Promise<boolean>;
 }
 
 const AdminUnitResourceRow: React.FC<{ 
@@ -19,8 +20,9 @@ const AdminUnitResourceRow: React.FC<{
   sessions: Session[],
   onSave: (id: string, updates: Partial<Unit>) => Promise<{ success: boolean; error?: string }>,
   onEditDetails: (id: string) => void,
-  onSaveSession: (unitId: string, note: string) => Promise<boolean>
-}> = ({ unit, sessions, onSave, onEditDetails, onSaveSession }) => {
+  onSaveSession: (unitId: string, note: string) => Promise<boolean>,
+  onResetProgress: (id: string) => Promise<boolean>
+}> = ({ unit, sessions, onSave, onEditDetails, onSaveSession, onResetProgress }) => {
   const [showReports, setShowReports] = useState(false);
   const [newNote, setNewNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -50,6 +52,31 @@ const AdminUnitResourceRow: React.FC<{
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button 
+            onClick={async (e) => {
+              e.stopPropagation();
+              if (window.confirm(`Tem certeza que deseja zerar o progresso (apagar respostas) APENAS da unidade "${unit.title}"? Isso não afeta os relatórios.`)) {
+                await onResetProgress(unit.id);
+                alert('Progresso zerado com sucesso!');
+              }
+            }}
+            title="Zerar Progresso do Aluno nesta unidade"
+            style={{
+              padding: '10px',
+              borderRadius: '12px',
+              border: '1px solid #fecaca',
+              background: '#fef2f2',
+              color: '#ef4444',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s'
+            }}
+          >
+            <RotateCcw size={18} />
+          </button>
+
           <button 
             onClick={() => setShowReports(!showReports)}
             className={`admin-report-btn ${showReports ? 'active' : ''}`}
@@ -185,7 +212,7 @@ const AdminUnitResourceRow: React.FC<{
   );
 };
 
-export const Planning: React.FC<PlanningProps> = ({ units, sessions, isAdmin, settings, onUpdateUnit, onEditDetails, onSaveSession }) => {
+export const Planning: React.FC<PlanningProps> = ({ units, sessions, isAdmin, settings, onUpdateUnit, onEditDetails, onSaveSession, onResetProgress }) => {
   const handlePrint = () => {
     window.print();
   };
@@ -316,6 +343,7 @@ export const Planning: React.FC<PlanningProps> = ({ units, sessions, isAdmin, se
                 onSave={onUpdateUnit} 
                 onEditDetails={onEditDetails}
                 onSaveSession={onSaveSession}
+                onResetProgress={onResetProgress}
               />
             ))}
           </div>
