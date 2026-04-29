@@ -546,20 +546,23 @@ const StepNavigation: React.FC<{
              </div>
 
              <div className="game-launcher-mission embed-card-v7">
-                <div className="mission-center-v7">
-                   <EmbedPreview
-                     key={(current as EmbedStep).url}
-                     ref={previewRef}
-                     url={(current as EmbedStep).url}
-                     title={(current as EmbedStep).title || `Atividade ${(current as EmbedStep).idx + 1}`}
-                     thumbnailUrl={unit.embed_preview_images?.[(current as EmbedStep).idx]}
-                     maskIcon={(current as EmbedStep).maskIcon}
-                     maskSize={(current as EmbedStep).maskSize}
-                   />
+                <div className="mission-center-v7" style={{ cursor: 'pointer' }} onClick={() => previewRef.current?.open()}>
+                   <div style={{ display: 'none' }}>
+                     <EmbedPreview
+                       key={(current as EmbedStep).url}
+                       ref={previewRef}
+                       url={(current as EmbedStep).url}
+                       title={(current as EmbedStep).title || `Atividade ${(current as EmbedStep).idx + 1}`}
+                       thumbnailUrl={unit.embed_preview_images?.[(current as EmbedStep).idx]}
+                       maskIcon={(current as EmbedStep).maskIcon}
+                       maskSize={(current as EmbedStep).maskSize}
+                     />
+                   </div>
+                   <img src={memoryGameImg} alt="Interactive Activity Skin" className="word-game-icon-3d" />
                 </div>
                 <div className="mission-footer-v7" style={{ marginTop: 0 }}>
                    <h1 className="mission-footer-title">{(current as EmbedStep).title || 'Atividade'}</h1>
-                   <p className="mission-mechanic">Status: Disponível para Prática</p>
+                   <p className="mission-mechanic">Mecânica: Atividade Interativa</p>
                    <button className="play-btn-v7-mission" onClick={() => previewRef.current?.open()} style={{ background: currentColors.accent }}>
                       Começar Missão!
                    </button>
