@@ -476,6 +476,9 @@ const StepNavigation: React.FC<{
 
              {/* RIGHT SIDE: START BUTTON */}
              <div className="game-launcher-mission">
+                <div className="mission-center-v7">
+                   <img src={wordGameImg} alt="Word Game Skin" className="word-game-icon-3d" />
+                </div>
                 <div className="mission-footer-v7" style={{ marginTop: 0 }}>
                    <h1 className="mission-footer-title">{current.title || 'Desafio da Unidade'}</h1>
                    <p className="mission-mechanic">Mecânica: {current.mechanic || 'Atividade Interativa'}</p>
