@@ -222,8 +222,8 @@ export const App: React.FC = () => {
         )}
 
         <button 
-          className={`nav-link-kids ${activeTab === 'chat' ? 'active' : ''}`}
-          onClick={() => setActiveTab('chat')}
+          className={`nav-link-kids ${activeTab === 'whatsapp' ? 'active' : ''}`}
+          onClick={() => { setActiveTab('whatsapp'); setActiveUnit(null); }}
         >
           <div className="icon-wrapper">🎈</div>
           <span>Ajuda</span>

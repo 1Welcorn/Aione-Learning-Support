@@ -474,14 +474,9 @@ const StepNavigation: React.FC<{
                 </div>
              </div>
 
-             {/* RIGHT SIDE: CARD WITH ICON */}
+             {/* RIGHT SIDE: START BUTTON */}
              <div className="game-launcher-mission">
-                <div className="mission-center-v7">
-                   <div className="game-visual-v7">
-                      <img src={wordGameImg} alt="Word Game" className="word-game-icon-3d" />
-                   </div>
-                </div>
-                <div className="mission-footer-v7">
+                <div className="mission-footer-v7" style={{ marginTop: 0 }}>
                    <h1 className="mission-footer-title">{current.title || 'Desafio da Unidade'}</h1>
                    <p className="mission-mechanic">Mecânica: {current.mechanic || 'Atividade Interativa'}</p>
                    <button className="play-btn-v7-mission" onClick={onStartGame} style={{ background: currentColors.accent }}>
@@ -514,9 +509,9 @@ const StepNavigation: React.FC<{
                 <div className="mission-center-v7">
                    {(() => {
                       const mainMedia = unit.external_links?.find(l => l.label === 'media' || l.label === 'video_file' || l.label === 'video' || l.label === 'HTML');
-                      if (!mainMedia) return <img src={wordGameImg} alt="Mascot" className="word-game-icon-3d" />;
+                      if (!mainMedia) return null;
                       if (mainMedia.label === 'video_file' || mainMedia.url.toLowerCase().endsWith('.mp4')) return <VideoPlayerV5 media={mainMedia} />;
-                      return <img src={mainMedia.url} alt="Mascot" className="word-game-icon-3d" />;
+                      return <img src={mainMedia.url} alt="Media" className="word-game-icon-3d" />;
                    })()}
                 </div>
                 <div className="mission-footer-v7">
@@ -555,7 +550,7 @@ const StepNavigation: React.FC<{
                      url={(current as EmbedStep).url}
                      title={(current as EmbedStep).title || `Atividade ${(current as EmbedStep).idx + 1}`}
                      thumbnailUrl={unit.embed_preview_images?.[(current as EmbedStep).idx]}
-                     maskIcon={(current as EmbedStep).maskIcon || ((current as EmbedStep).idx === 0 ? memoryGameImg : undefined)}
+                     maskIcon={(current as EmbedStep).maskIcon}
                      maskSize={(current as EmbedStep).maskSize}
                    />
                 </div>
@@ -569,12 +564,7 @@ const StepNavigation: React.FC<{
 
         {current.type === 'question' && (
           <div className="mission-horizontal-v7 question-step">
-             <div className="game-launcher-mission question-mascot-card">
-                <div className="mission-center-v7">
-                   <img src={wordGameImg} alt="Mascot" className="word-game-icon-3d mini" />
-                </div>
-             </div>
-             <div className="mission-intro-section-v7 question-info">
+             <div className="mission-intro-section-v7 question-info" style={{ width: '100%' }}>
                 <span className="mission-tag-v7" style={{ background: '#dcfce7', color: '#15803d' }}>DESAFIO PRÁTICO</span>
                 <div className="question-wrapper-horizontal">
                    <QuestionBlock 
@@ -597,12 +587,7 @@ const StepNavigation: React.FC<{
 
         {current.type === 'report' && (
           <div className="mission-horizontal-v7 report-step">
-             <div className="game-launcher-mission report-mascot-card">
-                <div className="mission-center-v7">
-                   <img src={wordGameImg} alt="Mascot" className="word-game-icon-3d mini" />
-                </div>
-             </div>
-             <div className="mission-intro-section-v7 report-info">
+             <div className="mission-intro-section-v7 report-info" style={{ width: '100%' }}>
                 <span className="mission-tag-v7" style={{ background: '#f1f5f9', color: '#475569' }}>RELATÓRIO FINAL</span>
                 <h1 className="mission-title-v7 side">Como foi hoje?</h1>
                 <textarea 
@@ -616,7 +601,7 @@ const StepNavigation: React.FC<{
                    onClick={handleSaveSession}
                    disabled={!note.trim() || isSavingSession}
                    style={{ background: sessionSuccess ? '#10b981' : currentColors.main }}
-                >
+                 >
                    {isSavingSession ? 'Salvando...' : sessionSuccess ? 'Concluído! 🎉' : 'Finalizar e Salvar'}
                 </button>
              </div>
