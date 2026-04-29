@@ -557,9 +557,12 @@ const StepNavigation: React.FC<{
                      maskSize={(current as EmbedStep).maskSize}
                    />
                 </div>
-                <div className="mission-footer-v7">
+                <div className="mission-footer-v7" style={{ marginTop: 0 }}>
                    <h1 className="mission-footer-title">{(current as EmbedStep).title || 'Atividade'}</h1>
                    <p className="mission-mechanic">Status: Disponível para Prática</p>
+                   <button className="play-btn-v7-mission" onClick={() => previewRef.current?.open()} style={{ background: currentColors.accent }}>
+                      Começar Missão!
+                   </button>
                 </div>
              </div>
           </div>
