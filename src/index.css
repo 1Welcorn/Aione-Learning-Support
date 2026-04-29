@@ -6376,6 +6376,7 @@ select {
   align-items: center;
   position: relative;
   padding: 10px 0 30px 0;
+  flex: 1;
 }
 
 .mission-pills-right {
@@ -6423,7 +6424,7 @@ select {
   font-size: 14px;
   font-weight: 700;
   color: #64748b;
-  margin-bottom: 30px;
+  margin-bottom: 15px;
 }
 
 .play-btn-v7-mission {
@@ -6912,7 +6913,8 @@ select {
   align-items: center !important;
   max-width: 1300px !important;
   margin: 0 auto !important;
-  height: 58vh !important; /* Fixed height to avoid scroll */
+  min-height: 58vh !important;
+  height: auto !important;
   gap: 60px !important;
 }
 
@@ -6950,7 +6952,8 @@ select {
 /* Right Section: The Card */
 .game-launcher-mission, .embed-card-v7, .brief-media-card, .question-mascot-card {
   width: 580px !important; /* Same width as word game */
-  height: 480px !important; /* Same height as word game */
+  min-height: 480px !important;
+  height: auto !important;
   border-radius: 40px !important;
   background: white !important;
   box-shadow: 
